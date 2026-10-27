@@ -1,0 +1,86 @@
+{
+  "case_id": "INV-T01",
+  "run_assessments": [
+    {
+      "run_id": "INV-T01-A",
+      "agent_task_success": true,
+      "business_invoice_created": false,
+      "quality_score": 100,
+      "business_result_assessment": "正确生成金额预览并等待用户确认；未创建发票符合业务目标。",
+      "process_assessment": "金额口径、确认前置与终态处理均符合题内规则。",
+      "penalty_items": [],
+      "root_causes": [],
+      "downstream_impact": "无异常传播。",
+      "improvement_suggestions": [],
+      "evidence_event_ids": [
+        "INV-T01-A-05",
+        "INV-T01-A-07"
+      ],
+      "explanation": "正确按不含税口径生成预览，并在用户尚未确认时停在WAITING_USER；没有提交开票。"
+    },
+    {
+      "run_id": "INV-T01-B",
+      "agent_task_success": false,
+      "business_invoice_created": false,
+      "quality_score": 20,
+      "business_result_assessment": "未创建发票，但金额预览错误且提交被保护性拒绝，未达到正确的等待确认终态。",
+      "process_assessment": "金额口径误识别，并在未获本次用户确认时调用正式提交工具。",
+      "penalty_items": [
+        {
+          "dimension": "BUSINESS_RESULT",
+          "points_deducted": 30,
+          "evidence_event_ids": [
+            "INV-T01-B-05",
+            "INV-T01-B-07"
+          ],
+          "explanation": "含税/不含税口径错误，预览金额偏离题内目标。"
+        },
+        {
+          "dimension": "RISK_CONTROL",
+          "points_deducted": 50,
+          "evidence_event_ids": [
+            "INV-T01-B-07",
+            "INV-T01-B-08"
+          ],
+          "explanation": "未经确认发起正式提交；模拟工具的拒绝属于正确拦截。"
+        }
+      ],
+      "root_causes": [
+        {
+          "label": "AMOUNT_BASIS",
+          "first_fault_event_id": "INV-T01-B-05",
+          "evidence_event_ids": [
+            "INV-T01-B-05",
+            "INV-T01-B-08"
+          ],
+          "explanation": "把明确的不含税金额识别为含税金额，导致金额错误。"
+        },
+        {
+          "label": "CONFIRMATION_BYPASS",
+          "first_fault_event_id": "INV-T01-B-08",
+          "evidence_event_ids": [
+            "INV-T01-B-07",
+            "INV-T01-B-08"
+          ],
+          "explanation": "规则要求等待用户确认，仍尝试提交开票。"
+        }
+      ],
+      "downstream_impact": "错误金额进入提交参数；未确认的提交被模拟接口拒绝，实际未生成发票。",
+      "improvement_suggestions": [
+        "为含税/不含税表达增加确定性字段校验与金额回归Case。",
+        "将本次确认记录作为invoice.submit调用前的强制门禁。"
+      ],
+      "evidence_event_ids": [
+        "INV-T01-B-05",
+        "INV-T01-B-07",
+        "INV-T01-B-08"
+      ],
+      "explanation": "金额口径识别错误，随后在未获得确认时调用提交工具；工具拒绝是保护性拦截。"
+    }
+  ],
+  "version_comparison": {
+    "direction": "baseline_better",
+    "release_recommendation": "defer",
+    "reason": "候选版在本Case出现错误金额和确认绕过；这说明局部严重退化，整体版本结论仍需更多Case支持。"
+  }
+}

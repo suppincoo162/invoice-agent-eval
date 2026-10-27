@@ -1,0 +1,142 @@
+{
+  "data_origin": "synthetic_sandbox",
+  "notice": "仅为竞赛示例档案，无真实税号、账户或联系方式；若与某Case的context不一致，以Case内context为准。",
+  "seller": {
+    "seller_id": "SELLER-SIM-01",
+    "display_name": "模拟开票企业"
+  },
+  "buyers": [
+    {
+      "buyer_id": "CUST-021",
+      "display_name": "模拟客户CUST-021",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-022",
+      "display_name": "模拟客户CUST-022",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-031",
+      "display_name": "星云科技甲（模拟）",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-032",
+      "display_name": "星云科技乙（模拟）",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-041",
+      "display_name": "模拟客户CUST-041",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-051",
+      "display_name": "模拟客户CUST-051",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-061",
+      "display_name": "模拟客户CUST-061",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-071",
+      "display_name": "模拟客户CUST-071",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-081",
+      "display_name": "模拟客户CUST-081",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-091",
+      "display_name": "模拟客户CUST-091",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-101",
+      "display_name": "模拟客户CUST-101",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-111",
+      "display_name": "模拟客户CUST-111",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-121",
+      "display_name": "模拟客户CUST-121",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-131",
+      "display_name": "模拟客户CUST-131",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-201",
+      "display_name": "模拟客户CUST-201",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-202",
+      "display_name": "模拟客户CUST-202",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-203",
+      "display_name": "模拟客户CUST-203",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-204",
+      "display_name": "模拟客户CUST-204",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-205",
+      "display_name": "模拟客户CUST-205",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-206",
+      "display_name": "模拟客户CUST-206",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-207",
+      "display_name": "模拟客户CUST-207",
+      "profile_complete": true
+    },
+    {
+      "buyer_id": "CUST-208",
+      "display_name": "模拟客户CUST-208",
+      "profile_complete": true
+    }
+  ],
+  "items": [
+    {
+      "item_id": "ITEM-006",
+      "display_name": "软件服务费",
+      "configured_rate": 0.06
+    },
+    {
+      "item_id": "ITEM-007",
+      "display_name": "实施服务费",
+      "configured_rate": 0.06
+    },
+    {
+      "item_id": "ITEM-008",
+      "display_name": "其他模拟服务费",
+      "configured_rate": 0.06
+    },
+    {
+      "item_id": "ITEM-016",
+      "display_name": "软件产品",
+      "configured_rate": 0.06
+    }
+  ]
+}

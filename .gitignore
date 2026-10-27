@@ -1,0 +1,26 @@
+# macOS 目录元数据
+.DS_Store
+
+# Python 缓存与虚拟环境
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 运行产物：两人各自本地跑，结果文件不入库，避免互相覆盖
+outputs/
+
+# 环境变量与密钥（含赛事统一模型 Key，禁止入库）
+.env
+
+# 日志与 Office 临时锁文件
+*.log
+.~*
+~$*
+
+# 编辑器与工具缓存
+.vscode/
+.idea/
+.pytest_cache/
+.ipynb_checkpoints/
