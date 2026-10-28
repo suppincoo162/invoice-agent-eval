@@ -27,8 +27,8 @@
 
 ## 数据目录纪律
 
-- `data/` 是**组委会资料包，只读**。任何时候不要修改、不要提交它的变更。
-- 输出的 JSONL 不要写进 `data/`（见 `docs/40-plan/tasks.md` 定下的输出路径）。
+- `docs/00-brief/data/` 是**组委会资料包，只读**。任何时候不要修改、不要提交它的变更。
+- 输出的 JSONL 不要写进 `docs/00-brief/data/`（见 `docs/40-plan/tasks.md` 定下的输出路径）。
 
 ## Git 纪律
 

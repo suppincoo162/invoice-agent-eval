@@ -114,7 +114,7 @@ git push origin --delete ljl/rules-engine # 删远端（若 GitHub 没自动删�
 
 - ❌ 直接 push 到 `main`
 - ❌ `git push --force`（对共享分支）；只能用 `--force-with-lease` 且仅限自己的分支
-- ❌ 提交 `data/` 里官方文件的修改（那是组委会资料，**只读**）
+- ❌ 提交 `docs/00-brief/data/` 里官方文件的修改（那是组委会资料，**只读**）
 - ❌ 提交密钥 / PAT / `.env` / 大文件（见 `.gitignore`）
 - ❌ 一个 MR 混多个不相关主题
 - ❌ 把别人的分支强推覆盖
