@@ -15,7 +15,8 @@
 | 2 | `docs/00-brief/competition.md` | 赛题要求与四项必做工作 |
 | 3 | `docs/00-brief/dataset.md` | **字段陷阱**（不读必踩） |
 | 4 | `docs/10-spec/spec.md` | 「做对」的定义 |
-| 5 | `docs/30-tdd/strategy.md` | 确定性 vs 模型的分界线 |
+| 5 | **[`docs/05-conventions/engineering-principles.md`](docs/05-conventions/engineering-principles.md)** | **六条工程原则——做任何判断前先看** |
+| 6 | `docs/30-tdd/strategy.md` | 确定性 vs 模型的分界线 |
 
 ## 五条硬约束（做错任何一条 = 答案错）
 
@@ -24,6 +25,19 @@
 3. **两个判断必须分开** —— `agent_task_success`（是否守规则）与 `business_invoice_created`（发票是否真生成），**不得合并成"成功率"**
 4. **证据不足就说不足** —— 用 `INSUFFICIENT_EVIDENCE` 并说明缺什么，**不许虚构根因**
 5. **不得跨 run 引用事件编号**，**不得把单 Case 结论外推为整体版本结论**
+
+## 六条工程原则（详细理由见 `docs/05-conventions/engineering-principles.md`）
+
+| # | 原则 | 一句话 |
+|---|---|---|
+| 1 | **证据纪律** | 结论必须能回指 `event_id`；给不出就是没结论，用 `INSUFFICIENT_EVIDENCE` |
+| 2 | **先取事实再对齐** | 先手工走通一条真实 Case，再写通用规则 |
+| 3 | **判据可判定化** | 换个人拿同一条规则，应算出同一个分数 |
+| 4 | **检查器准入三问** | 防的错过去真实发生 ≥2 次才值得造工具；0 次不写 |
+| 5 | **非对称权重** | 严重错误（金额/确认/重复/回调）扣分要显著高于一般错误 |
+| 6 | **单一主位置** | 同一件事只在一处写正文，其他地方用链接；不写会漂的计数 |
+
+**用法**：不是每次动笔都过一遍——写代码前看 1/2/3，造工具前看 4，定评分前看 5，改文档前看 6。
 
 ## 数据目录纪律
 
