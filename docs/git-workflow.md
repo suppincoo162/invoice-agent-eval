@@ -2,56 +2,51 @@
 
 > 两人协作（李经霖 / 王怡然），**云端只有一个 `main`，任何人不得直接 push `main`。**
 
-## 一、分支模型
+## 一、分支模型：**只有 3 个分支，长期存在**
 
 ```
-origin/main            ← 唯一长期分支，永远可运行
-  ├── ljl/<topic>      ← 经霖的开发分支（本地 → 推送）
-  └── wyr/<topic>      ← 怡然的开发分支（本地 → 推送）
+origin/main          ← 唯一长期主干，保护分支，永远可运行
+  ├── ljl/dev        ← 经霖的常驻开发分支（合并后不删，继续用）
+  └── wyr/dev        ← 怡然的常驻开发分支（合并后不删，继续用）
 ```
 
-**规则**：
+**三条规则**：
 
-1. **`main` 是保护分支** —— 只接受 MR，禁止直接 push
-2. **每人一个自己的开发分支**，按 `<名字缩写>/<主题>` 命名
-3. **开发完推送自己的分支**到云端，然后**提 MR** 请求合并进 `main`
-4. **合并后删除远端主题分支**（保持远端清爽；本地分支可留）
+1. **`main` 只接受 MR**，禁止直接 push
+2. **每人只有一个常驻开发分支**（`ljl/dev` / `wyr/dev`），**不按任务开新分支**
+3. **MR 合并后不删开发分支** —— 继续在同一条分支上下一次开发
 
-### 分支命名
+> **为什么不用「一任务一分支」**：
+> 两人小项目 + 一个多月周期，主题分支会堆成十几个，合并完还要清理，纯增管理成本。
+> **常驻分支 + 每次合并前 rebase 同步 main**，就够隔离工作，且分支数恒定。
 
-| 前缀 | 用途 | 例 |
-|---|---|---|
-| `ljl/` `wyr/` | 个人主题分支 | `ljl/rules-engine` |
-| `feat/` | 两人共同的较大功能 | `feat/llm-layer` |
-| `fix/` | 修 bug | `fix/amount-rounding` |
-
-**禁止**：`test`、`tmp`、`dev`、`master`、`main` 这类无信息名字。
+**唯一的例外**：要做一个**高风险实验**（可能推翻重来、或改动面很大）时，可以临时开 `ljl/exp-<主题>`，**实验完无论成败都删掉**。
 
 ## 二、日常流程
 
 ```bash
-# 1. 开工前先同步 main
-git switch main
-git pull --rebase origin main
+# 1. 切到自己的常驻分支（第一次：git switch -c ljl/dev，之后直接 switch）
+git switch ljl/dev
 
-# 2. 建自己的分支（从最新 main）
-git switch -c ljl/rules-engine
+# 2. 先同步 main 上的他人改动（每次都做，减少后面冲突）
+git fetch origin
+git rebase origin/main
 
 # 3. 干活，分小步提交
 git add -A
 git commit -m "feat(rules): 实现金额口径校验"
 
 # 4. 推送自己的分支
-git push -u origin ljl/rules-engine
+git push origin ljl/dev
+#    ⚠️ rebase 过后历史变了，要用 --force-with-lease（见第五节）
 
-# 5. 在 GitHub 上提 MR → 目标 main
-#    标题写清做什么，描述写清怎么验证
+# 5. 在 GitHub 上提 MR：源 ljl/dev → 目标 main
+#    标题写清做什么，描述写清「怎么验证的」
 
-# 6. 合并后清理
-git switch main && git pull --rebase origin main
-git branch -d ljl/rules-engine            # 删本地
-git push origin --delete ljl/rules-engine # 删远端（若 GitHub 没自动删）
+# 6. MR 合并后 —— **不删分支**，回到第 1 步继续下一次
 ```
+
+**关键**：第 2 步的 `rebase origin/main` **每次开工都做**。常驻分支的风险就是"攒太久没同步"，天天同步就不会有冲突。
 
 ## 三、提交信息规范
 
@@ -113,13 +108,17 @@ git push origin --delete ljl/rules-engine # 删远端（若 GitHub 没自动删�
 ## 六、禁做清单
 
 - ❌ 直接 push 到 `main`
-- ❌ `git push --force`（对共享分支）；只能用 `--force-with-lease` 且仅限自己的分支
+- ❌ `git push --force`（对 `main` 绝对禁止）；自己做 rebase 后需强推时**只能用 `--force-with-lease`，且仅限自己的 `ljl/dev` / `wyr/dev`**
 - ❌ 提交 `docs/00-brief/data/` 里官方文件的修改（那是组委会资料，**只读**）
 - ❌ 提交密钥 / PAT / `.env` / 大文件（见 `.gitignore`）
 - ❌ 一个 MR 混多个不相关主题
+- ❌ 按任务开一堆主题分支（除非是高风险实验，见第一节例外）
 - ❌ 把别人的分支强推覆盖
 
-## 七、当前状态
+## 七、当前分支状态
 
-- `main` 现有 1 个提交：`f3e891a chore: 初始化仓库与赛题资料`
-- 尚无分支保护规则 —— **建议在 GitHub 上给 `main` 开 branch protection**（要求 MR + 至少 1 人 approve），见下方待办
+- `main` —— 长期主干（已合并初始化文档与工程原则层）
+- `ljl/dev` —— 经霖的常驻开发分支
+- `wyr/dev` —— 怡然的常驻开发分支（待建）
+
+> **建议**：在 GitHub 上给 `main` 开 branch protection（要求 MR + 至少 1 人 approve），否则本规范只是纸面约定。
