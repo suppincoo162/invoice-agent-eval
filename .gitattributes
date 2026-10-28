@@ -1,0 +1,15 @@
+# 统一换行符：仓库内存 LF，各平台检出时按需转换
+# 目的：Windows（经霖）与 macOS（怡然）改同一文件时不产生"整文件都改了"的假 diff
+* text=auto eol=lf
+
+# 明确二进制，避免任何转换
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.zip binary
+
+# 数据文件保持原样（LF），逐字节可比对
+*.jsonl text eol=lf
+*.json  text eol=lf

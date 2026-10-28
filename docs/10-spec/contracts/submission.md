@@ -1,6 +1,6 @@
 # 输出契约（对齐 schema）
 
-> 状态：**骨架**。真源＝`data/06_提交格式.schema.json`，本文件是**人读版说明**，两者冲突以 schema 为准。
+> 状态：**骨架**。真源＝`docs/00-brief/data/06_提交格式.schema.json`，本文件是**人读版说明**，两者冲突以 schema 为准。
 
 ## 顶层
 
@@ -33,7 +33,9 @@
 ## 校验命令
 
 ```bash
-python data/08_提交格式校验.py --cases data/04_无标注验证轨迹.jsonl --submission your_submission.jsonl
+python docs/00-brief/data/08_提交格式校验.py \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --submission outputs/your_submission.jsonl
 ```
 
 ⚠️ **格式通过 ≠ 答案正确。**
