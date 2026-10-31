@@ -146,10 +146,56 @@ Case
 
 > 验证集里 **V02 / V04 / V08** 都是"两个考点叠在一起"，训练集对应的是单考点版本（T05+T11 / T13+T14 一类）。**这是"规则要能组合、不能写成单点 if"的数据依据。**
 
+## 参照档案 `09_` 与 Case 内 `context` 的关系（**边界须记牢**）
+
+`09_模拟客户与商品档案.json` 顶层：`data_origin` / `notice` / `seller` / `buyers`（**22** 个）/ `items`（**4** 个）。
+
+> 🔴 **档案 `notice` 原文**：「仅为竞赛示例档案……**若与某 Case 的 context 不一致，以 Case 内 context 为准**。」
+> ⇒ 判据真源是 **Case 自己的 `context`**，`09_` 只是汇总参考，**不要拿它去覆盖 `context`**。
+
+实测差异：
+
+- `items` 4 种（`ITEM-006` 软件服务费 / `007` 实施服务费 / `008` 其他模拟服务费 / `016` 软件产品），**`configured_rate` 全部 = 0.06** ⇒ 沙箱税率是**常量 6%**，税额错只可能来自**口径或算术**，不会来自税率查错。
+- `buyers` 22 个**全部 `profile_complete=true`**，但 Case 的 `buyer_candidates` 可以**多候选**（`INV-T04` 同名消歧）⇒ **「档案完整」≠「能唯一确定购方」**，消歧判据必须看 `context.buyer_candidates` 的数量与 `display_name`。
+
+## `context` / `reference_result` 全量字段面
+
+**`context`（22 个 Case 的并集）**
+
+| 出现范围 | 字段 |
+|---|---|
+| **全部 22** | `seller_id` · `buyer_candidates` · `item_candidates` · **`user_confirmation_recorded`** · `sandbox_rule_set` |
+| 2 个 Case | `required_missing_fields` · `duplicate_order_id` · `risk_flags` · `original_invoice_id` · `line_items` |
+| 仅 1 个 Case | `buyer_disambiguation_required` · `original_invoice_record` · `submit_service_condition` · `existing_draft` · `callback_service_condition` · `callback_error_code` · `amount_basis_unspecified` · `conversation_rounds` |
+
+**`reference_result`（22 个 Case 的并集）**
+
+| 出现范围 | 字段 |
+|---|---|
+| **全部 22** | `invoice_task_type` · `buyer_id` · `item_id` · `amount_value` · `amount_basis` · `expected_amounts` · **`acceptable_snapshot_state`** · **`invoice_should_exist`** |
+| **10 个 Case** | **`required_action`** ← 一半 Case 带"期望动作"，是"该追问/该阻断"类场景的判据 |
+| 2 个 Case | `expected_line_count` · `expected_line_items`（批量场景） |
+
+> `reference_result` 是**题内预期**，不是专家评分；训练集专家判定在 `03_`，见 [`labeled-reference.md`](labeled-reference.md)。
+
+## 流程字典 `01_` 的字段与「终态」怎么表达
+
+顶层 8 个键：`notice` · `workflow_id` · `schema_version` · `supported_task_types` · `step_statuses` · **`result_codes`** · **`event_requirement`** · `steps`。
+
+- `steps` 15 项，每项 6 字段：`order` · `step_id` · `name` · `stage` · **`required_by_default`** · `possible_next_steps`
+- 🔴 **没有 `terminal` 字段**——**终态由 `possible_next_steps == []` 表达**，共 5 个：`COMPLETE_TASK` · `FAIL_TASK` · `TIMEOUT_TASK` · `TRANSFER_TO_HUMAN` · `CANCEL_TASK`
+- `required_by_default`：**true 10 / false 5**
+- `result_codes` **自带 `terminal` 布尔**：`E100 terminal=false`，其余 6 个均 `true`；`E800` 另有 `aliases: ["CANCELED"]`
+- `supported_task_types`：`1=蓝票` · `2=红票` · `3=批量开票`
+- `event_requirement`：事件 **18 个必备字段**清单，可当"事件完整性"的机械核对表
+
 ## 待补清单
 
 - [x] 15 个 `step_id` 与 `module` 的实际分布（见上「step_id 事件频次」）
 - [x] 每种 scenario 的覆盖情况（见上「scenario 覆盖」，训练 14 + 验证 8 全列）
 - [x] `observed_input`/`output` 的字段结构（见上「字段面」表）
 - [x] `tool_calls` 的 tool 种类清单（见上，共 7 种）
-- [ ] `09_模拟客户与商品档案.json` 与各 Case `context` 的字段差异（未开始）
+- [x] `09_` 档案与各 Case `context` 的字段差异（见上「参照档案与 context 的关系」）
+- [x] `03_` 参考标注与 `05_` 示范答案的形状（见 [`labeled-reference.md`](labeled-reference.md)）
+- [x] `01_` 流程字典的完整字段与终态表达（见上）
+- [ ] `observed_output` 里 `preview` / `computed_amounts` 的小数精度与四舍五入边界（下一轮备料）
