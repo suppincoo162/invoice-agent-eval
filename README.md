@@ -15,14 +15,17 @@
 3. 同一 Case 两个版本的**提升 / 退化 / 无差异**
 4. 产出机器可读结果 + 人读版本分析报告
 
-## 先读这个
+## 先读这个（人或 Agent 都是这三步）
 
-👉 **[`docs/README.md`](docs/README.md)** —— 六层文档导航，按编号顺序读。
+1. **你是谁、按什么规矩干活** → [`AGENTS.md`](AGENTS.md)（项目工作规则；Agent 请优先读它）
+2. **文档地图** → [`docs/README.md`](docs/README.md)（六层导航，按编号顺序读）
+3. **现在到哪一步了** → 见下方「当前状态」，活台账在 [`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)
 
-想快速上手看两处：
+快速上手看三处：
 
-- **[`docs/00-brief/dataset.md`](docs/00-brief/dataset.md)** —— 字段结构 + **7 条必踩陷阱**
-- **[`docs/10-spec/spec.md`](docs/10-spec/spec.md)** —— "做对"的定义与硬约束
+- [`docs/00-brief/dataset.md`](docs/00-brief/dataset.md) —— 字段结构 + **必踩的陷阱**
+- [`docs/00-brief/rules.md`](docs/00-brief/rules.md) —— **9 条业务规则 × 轨迹里拿什么字段核对**（判对错的第一手依据）
+- [`docs/00-brief/labeled-reference.md`](docs/00-brief/labeled-reference.md) —— **官方答案长什么样**
 
 ## 目录
 
@@ -42,6 +45,14 @@
 
 **只用一个 `main` 分支 + 各自本地开发分支 + MR 合并** —— 完整规范见 [`docs/git-workflow.md`](docs/git-workflow.md)。
 
-## 当前状态
+## 当前状态（**as of 2026-10-31** · 快照，非实时）
 
-见 [`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)（**不在文档里抄会漂的数字**）。
+> 实时进度只在一处维护：[`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)。以下是带日期的快照，方便"刚拿到仓库的人/Agent"一眼判断该不该往下干。
+
+| 项 | 状态 |
+|---|---|
+| **所处阶段** | **阶段 A（备料·事实层）已完成；尚未写任何代码** |
+| 已完成 | 赛题精读（15 步 + 转移白名单）· 数据字段面与频次 · 9 条业务规则的可核对字段 · 官方标注与示范答案形状 · **INV-T01 手工复现（与官方标注一致）** · 判定式模型调研 |
+| 未开始 | `10-spec`（评分口径、证据不足门槛、首因判据）· `20-design`（架构与 ADR）· `30-tdd`（确定性/模型边界）· 全部代码 |
+| **下一步** | 定 4 个判据：`INSUFFICIENT_EVIDENCE` 门槛 · 首因 vs 连锁后果 · `quality_score` 口径 · 确定性/模型边界（见 tasks.md 的 T-014～T-017） |
+| 谁能动 | 任何人都可以读；**改 `main` 一律走 MR**（见 [`docs/git-workflow.md`](docs/git-workflow.md)）；`docs/00-brief/data/` 是组委会资料，**只读** |
