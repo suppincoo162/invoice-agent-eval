@@ -7,6 +7,15 @@
 **评估已执行的开票 Agent，不是实现开票 Agent。**
 给同一业务任务的基线版/候选版两条轨迹，判断谁做对了、错在哪、影响多大、哪个版本更好。
 
+## 当前阶段（**as of 2026-10-31**，给你定位用）
+
+**阶段 A（备料·事实层）已完成，尚未写任何代码。**
+事实层在 `docs/00-brief/`（赛题/数据/规则/官方标注/手工复现已实测）；`10-spec` 起全是骨架。
+**下一步是定 4 个判据**（证据不足门槛 / 首因判据 / `quality_score` 口径 / 确定性-模型边界），
+定义见 [`docs/40-plan/tasks.md`](docs/40-plan/tasks.md) T-014～T-017。
+⚠️ **判据没定之前不要写判定逻辑**——否则同一个 Case 两次判定会不一致。
+实时进度只看 `tasks.md`，本段是带日期的快照。
+
 ## 开工前必读（按顺序）
 
 | # | 读什么 | 为什么 |
@@ -14,9 +23,11 @@
 | 1 | `docs/README.md` | 六层文档导航，知道该去哪找 |
 | 2 | `docs/00-brief/competition.md` | 赛题要求与四项必做工作 |
 | 3 | `docs/00-brief/dataset.md` | **字段陷阱**（不读必踩） |
-| 4 | `docs/10-spec/spec.md` | 「做对」的定义 |
-| 5 | **[`docs/05-conventions/engineering-principles.md`](docs/05-conventions/engineering-principles.md)** | **六条工程原则——做任何判断前先看** |
-| 6 | `docs/30-tdd/strategy.md` | 确定性 vs 模型的分界线 |
+| 4 | `docs/00-brief/rules.md` | **9 条业务规则 × 轨迹里拿什么字段核对**（判对错的第一手依据） |
+| 5 | `docs/00-brief/labeled-reference.md` | **官方答案长什么样**（`03_` 标注 + `05_` 示范；知道"标准形态"才判得了差距） |
+| 6 | `docs/10-spec/spec.md` | 「做对」的定义 |
+| 7 | **[`docs/05-conventions/engineering-principles.md`](docs/05-conventions/engineering-principles.md)** | **六条工程原则——做任何判断前先看** |
+| 8 | `docs/30-tdd/strategy.md` | 确定性 vs 模型的分界线 |
 
 ## 五条硬约束（做错任何一条 = 答案错）
 
@@ -66,6 +77,8 @@
 - 每个结论必须能回指到 `event_id`，否则不算证据
 - 新增判定逻辑必须在 `docs/30-tdd/cases.md` 有对应用例
 
-## 当前进度
+## 进度怎么记（三条）
 
-见 `docs/40-plan/tasks.md`。**不要在文档里抄写"已完成 N 项"这类会漂的数字**——只写指针。
+1. **唯一主位置**：`docs/40-plan/tasks.md`（活台账，勾选式 + 证据指针）。`README.md` 与本文件顶部的「当前阶段」只是**带日期的快照**。
+2. **完成必须有证据**：打勾时附文档路径 / commit / 命令输出，**不靠记忆**。
+3. **不抄会漂的计数**：不写"已完成 N 项""还剩 N 天"这类数字；要写就带 `(as of YYYY-MM-DD)`。

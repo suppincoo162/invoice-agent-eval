@@ -156,7 +156,11 @@
 
 ## 待补清单
 
-- [ ] 题内业务规则 9 条的逐条展开（见 `docs/00-brief/data/07_数据字典与业务规则.md` §二）
-- [ ] 「完整示例 INV-T01」的逐步复现（手工走一遍 A/B 两条轨迹）
-- [ ] 15 个 step_id 在真实轨迹里的实际出现频率（统计 `02_`/`04_`）
-- [ ] `tool_calls` 的 tool 种类清单
+- [x] 题内业务规则 9 条的逐条展开 → **已落到 [`rules.md`](rules.md)**（9 条 × 轨迹里可核对的字段 × 关联根因标签；原文仍在 `data/07_…md` §二，不复制）
+- [x] 「完整示例 INV-T01」的逐步复现 → **已落到 [`walkthrough-INV-T01.md`](walkthrough-INV-T01.md)**（A/B 两条轨迹逐事件对照 + 首错 `INV-T01-B-05` + 传播链 + 两个并列根因）
+- [x] 15 个 step_id 在真实轨迹里的实际出现频率 → **已落到 [`dataset.md`](dataset.md)**「step_id 事件频次」（训练/验证并列；`TIMEOUT_TASK` 两集均为 0，超时由 `step_status=TIMED_OUT` 表达）
+- [x] `tool_calls` 的 tool 种类清单 → **已落到 [`dataset.md`](dataset.md)**（共 **7 种**，且**一对一绑定固定 step**）
+- [x] `09_模拟客户与商品档案.json` 与各 Case `context` 的字段差异 → **已落到 [`dataset.md`](dataset.md)**（档案 `notice` 明写「以 Case 内 `context` 为准」；`items` 税率全为 0.06 常量；`buyers` 全 `profile_complete=true` 但**不保证唯一**）
+- [x] `03_` 参考标注的分布与 `05_` 示范答案的形状 → **已落到 [`labeled-reference.md`](labeled-reference.md)**（`(true,false)` 组合 **11 条** 为最常见形态；官方 15 个根因**每个恰好 2 条证据**；`CONTEXT_UPDATE` 训练集**零样本**）
+- [x] `01_` 流程字典的完整字段与终态表达 → **已落到 [`dataset.md`](dataset.md)**（**无 `terminal` 字段**，终态＝`possible_next_steps == []`，共 5 个）
+- [ ] `observed_output` 里 `preview` / `computed_amounts` 的小数精度与四舍五入边界（下一轮备料）

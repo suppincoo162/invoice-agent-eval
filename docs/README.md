@@ -25,6 +25,24 @@
 - **`40-plan/`**：执行的**排期层**。任务可勾选，每项带验收标准
 - **`50-deliverables/`**：对外**交付层**。对齐比赛要求的方法说明与版本评估报告
 
+## `00-brief/` 现有文件（事实层内导航）
+
+| 文件 | 回答什么 |
+|---|---|
+| [`competition.md`](00-brief/competition.md) | 赛题是什么：四项工作、15 步流程与转移白名单、数据规模与陷阱 |
+| [`dataset.md`](00-brief/dataset.md) | 数据长什么样：字段面、频次、工具清单、金额精度、流程字典终态表达 |
+| [`rules.md`](00-brief/rules.md) | 9 条业务规则 × **轨迹里能用什么字段核对** × 关联根因标签 |
+| [`labeled-reference.md`](00-brief/labeled-reference.md) | 官方给的答案长什么样：`03_` 标注分布、`05_` 示范答案口径 |
+| [`walkthrough-INV-T01.md`](00-brief/walkthrough-INV-T01.md) | 一条真实 Case 的 A/B 逐步复现（首错定位 + 传播链） |
+| [`glossary.md`](00-brief/glossary.md) | 术语表（**骨架，未填**） |
+| [`research/`](00-brief/research/) | 外部技术现状采集（备料，不含决策） |
+
+## 备料（外部资料，**未进方案**）
+
+外部技术现状的采集记录，只写"资料说什么"，**不含决策**；要不要用、用在哪，须在 `10-spec`/`20-design` 落笔时才成立。
+
+- [`00-brief/research/jev-decision-models.md`](00-brief/research/jev-decision-models.md) — 判定式模型（Jev）现状、与本题 schema 的结构对照、可借鉴的设计点（2026-10-31 采集）
+
 ## 一条硬规矩
 
 **事实进 `00-brief/`，需求进 `10-spec/`，方案进 `20-design/`，验证进 `30-tdd/`，规矩进 `05-conventions/`。**

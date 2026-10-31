@@ -119,6 +119,6 @@ git push origin ljl/dev
 
 - `main` —— 长期主干（已合并初始化文档与工程原则层）
 - `ljl/dev` —— 经霖的常驻开发分支
-- `wyr/dev` —— 怡然的常驻开发分支（待建）
+- `wyr/dev` —— 怡然的常驻开发分支（**已建**；2026-10-31 实测与 `main` 同点，尚无她自己的提交）
 
 > **建议**：在 GitHub 上给 `main` 开 branch protection（要求 MR + 至少 1 人 approve），否则本规范只是纸面约定。
