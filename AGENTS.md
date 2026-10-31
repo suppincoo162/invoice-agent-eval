@@ -14,9 +14,11 @@
 | 1 | `docs/README.md` | 六层文档导航，知道该去哪找 |
 | 2 | `docs/00-brief/competition.md` | 赛题要求与四项必做工作 |
 | 3 | `docs/00-brief/dataset.md` | **字段陷阱**（不读必踩） |
-| 4 | `docs/10-spec/spec.md` | 「做对」的定义 |
-| 5 | **[`docs/05-conventions/engineering-principles.md`](docs/05-conventions/engineering-principles.md)** | **六条工程原则——做任何判断前先看** |
-| 6 | `docs/30-tdd/strategy.md` | 确定性 vs 模型的分界线 |
+| 4 | `docs/00-brief/rules.md` | **9 条业务规则 × 轨迹里拿什么字段核对**（判对错的第一手依据） |
+| 5 | `docs/00-brief/labeled-reference.md` | **官方答案长什么样**（`03_` 标注 + `05_` 示范；知道"标准形态"才判得了差距） |
+| 6 | `docs/10-spec/spec.md` | 「做对」的定义 |
+| 7 | **[`docs/05-conventions/engineering-principles.md`](docs/05-conventions/engineering-principles.md)** | **六条工程原则——做任何判断前先看** |
+| 8 | `docs/30-tdd/strategy.md` | 确定性 vs 模型的分界线 |
 
 ## 五条硬约束（做错任何一条 = 答案错）
 
