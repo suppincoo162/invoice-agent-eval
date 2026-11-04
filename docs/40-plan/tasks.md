@@ -1,7 +1,7 @@
 # 任务拆分
 
 > **本文件是「现在在推什么」的唯一主位置。**
-> 当前阶段＝**阶段 A（备料）与阶段 B0（判据固化）已完成；下一步进入 B1 单 Case MVP**（as of 2026-11-04）。
+> 当前阶段＝**阶段 A、B0、B1 已完成；下一步进入 B2 确定性规则扩展**（as of 2026-11-04）。
 > 完成的判定**必须有证据指针**（文档 / commit / 命令输出），不靠记忆。
 
 ## 阶段 A · 备料（事实层）—— ✅ 已完成 2026-10-31
@@ -25,17 +25,17 @@
 > T-014～T-017 是 `10-spec` 与 `30-tdd` 的输入。没有这些口径不能进入阶段 B1。
 > 建议执行顺序：**T-017 → T-014 → T-015 → T-016**；先锁定 MVP 的确定性边界，再定义证据、首因和评分。
 
-## 阶段 B1 · `INV-T01` 单 Case 纵向 MVP（未开始）
+## 阶段 B1 · `INV-T01` 单 Case 纵向 MVP —— ✅ 已完成 2026-11-04
 
 - [x] **T-001** 读透 15 个流程步骤 —— ✅ 证据：[`00-brief/competition.md`](../00-brief/competition.md) §二（含 `possible_next_steps` 白名单）
 - [x] **T-002** 统计训练集 scenario 分布 —— ✅ 证据：[`00-brief/dataset.md`](../00-brief/dataset.md)「scenario 覆盖」（训练 14 + 验证 8 全列）
-- [ ] **T-003** 实现事件读取与索引 —— 验收：能按 `case_id`/`run_id`/`event_id` 定位原始事实，不丢字段
-- [ ] **T-018** 实现流程转移白名单校验 —— 验收：非法相邻转移产生带证据的 process finding
-- [ ] **T-004** 实现金额口径/计算校验 —— 验收：先判口径，再用 `Decimal` 复算并核对三元组
-- [ ] **T-005** 实现确认前置校验 —— 验收：提交参数 `user_confirmed=false` 时识别 `CONFIRMATION_BYPASS`
-- [ ] **T-019** 区分工具保护性拒绝与工具故障 —— 验收：`CONFIRMATION_REQUIRED` 等明确拒绝不得归因为接口故障
-- [ ] **T-008** 实现确定性根因归因 —— 验收：`INV-T01-B` 产出官方一致的两个根因、首错事件和同 run 证据
-- [ ] **T-020** 实现评分与 A/B 输出 —— 验收：`INV-T01` 生成恰好两条 run assessment 和一份 version comparison，并通过官方格式校验
+- [x] **T-003** 实现事件读取与索引 —— ✅ 证据：[`invoice_eval/data.py`](../../invoice_eval/data.py)、[`tests/test_data.py`](../../tests/test_data.py)
+- [x] **T-018** 实现流程转移白名单校验 —— ✅ 证据：[`invoice_eval/workflow.py`](../../invoice_eval/workflow.py)、[`tests/test_workflow.py`](../../tests/test_workflow.py)
+- [x] **T-004** 实现金额口径/计算校验 —— ✅ 证据：[`invoice_eval/amounts.py`](../../invoice_eval/amounts.py)、[`tests/test_amounts.py`](../../tests/test_amounts.py)
+- [x] **T-005** 实现确认前置校验 —— ✅ 证据：[`invoice_eval/confirmation.py`](../../invoice_eval/confirmation.py)、[`tests/test_confirmation.py`](../../tests/test_confirmation.py)
+- [x] **T-019** 区分工具保护性拒绝与工具故障 —— ✅ 证据：[`invoice_eval/tooling.py`](../../invoice_eval/tooling.py)、[`tests/test_tooling.py`](../../tests/test_tooling.py)
+- [x] **T-008** 实现确定性根因归因 —— ✅ 证据：[`invoice_eval/evaluator.py`](../../invoice_eval/evaluator.py)、[`tests/test_evaluator.py`](../../tests/test_evaluator.py)
+- [x] **T-020** 实现评分与 A/B 输出 —— ✅ 证据：[`invoice_eval/scoring.py`](../../invoice_eval/scoring.py)、[`invoice_eval/cli.py`](../../invoice_eval/cli.py)、[`tests/test_evaluator.py`](../../tests/test_evaluator.py)
 
 ## 阶段 B2 · 确定性规则扩展（未开始）
 
