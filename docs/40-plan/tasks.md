@@ -1,7 +1,7 @@
 # 任务拆分
 
 > **本文件是「现在在推什么」的唯一主位置。**
-> 当前阶段＝**阶段 A（备料·事实层）已完成；阶段 B0（判据固化）进行中，尚未开始编码**（as of 2026-11-03）。
+> 当前阶段＝**阶段 A（备料）与阶段 B0（判据固化）已完成；下一步进入 B1 单 Case MVP**（as of 2026-11-04）。
 > 完成的判定**必须有证据指针**（文档 / commit / 命令输出），不靠记忆。
 
 ## 阶段 A · 备料（事实层）—— ✅ 已完成 2026-10-31
@@ -15,11 +15,11 @@
 | INV-T01 手工复现（A/B 逐事件 + 首错传播链，**与官方标注一致**） | [`00-brief/walkthrough-INV-T01.md`](../00-brief/walkthrough-INV-T01.md) |
 | 判定式模型（Jev）现状与可借鉴点（**不含决策**） | [`00-brief/research/jev-decision-models.md`](../00-brief/research/jev-decision-models.md) |
 
-## 阶段 B0 · 判据固化（进行中，编码前置）
+## 阶段 B0 · 判据固化 —— ✅ 已完成 2026-11-04
 
-- [ ] **T-014** 定「证据不足（`INSUFFICIENT_EVIDENCE`）」的判定门槛 —— 验收：能说明缺哪些事件/字段、出现哪些冲突时必须停止归因
-- [ ] **T-015** 定「首因 vs 连锁后果」的操作性判据 —— 验收：能区分独立根因与由前序错误引发的结果
-- [ ] **T-016** 定 `quality_score` 的可复现计算口径 —— 验收：同一发现对应稳定扣分，且每项扣分必须带同 run 的事件证据
+- [x] **T-014** 定「证据不足（`INSUFFICIENT_EVIDENCE`）」的判定门槛 —— ✅ 证据：[`10-spec/spec.md`](../10-spec/spec.md)「证据充分性与 `INSUFFICIENT_EVIDENCE` 门槛」
+- [x] **T-015** 定「首因 vs 连锁后果」的操作性判据 —— ✅ 证据：[`10-spec/spec.md`](../10-spec/spec.md)「首因与传播链判定」、[`30-tdd/cases.md`](../30-tdd/cases.md)「首因与传播链回归」
+- [x] **T-016** 定 `quality_score` 的可复现计算口径 —— ✅ 证据：[`10-spec/spec.md`](../10-spec/spec.md)「质量评分与责任分配」、[`20-design/decisions.md`](../20-design/decisions.md) ADR-002、[`30-tdd/cases.md`](../30-tdd/cases.md)「评分与信用分配回归」
 - [x] **T-017** 定「确定性校验 / 模型判断」的边界 —— ✅ 证据：[`20-design/decisions.md`](../20-design/decisions.md) ADR-001
 
 > T-014～T-017 是 `10-spec` 与 `30-tdd` 的输入。没有这些口径不能进入阶段 B1。
@@ -52,3 +52,7 @@
 
 - [ ] **T-012** 写方法说明
 - [ ] **T-013** 写版本评估报告
+
+## 后续候选（未排期，不影响当前 MVP）
+
+- [ ] **T-021** 试点反事实最小修复与对象感知信用分配 —— 前置：确定性基线完成；灵感与约束见 [`20-design/counterfactual-attribution.md`](../20-design/counterfactual-attribution.md)
