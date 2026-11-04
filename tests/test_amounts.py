@@ -5,6 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from invoice_eval import (
+    Event,
     calculate_amounts,
     find_amount_findings,
     load_dataset,
@@ -43,6 +44,43 @@ class AmountFabricationTests(unittest.TestCase):
             for finding in find_amount_findings(case, case.runs[0])
         ]
         self.assertNotIn("AMOUNT_FABRICATION_CHECK", rule_ids)
+
+    def test_unrelated_supplement_is_not_basis_clarification(self) -> None:
+        validation = load_dataset(
+            DATA_DIR / "04_无标注验证轨迹.jsonl"
+        )
+        case = validation.get_case("INV-V01")
+        source_run = case.get_run("INV-V01-A")
+        raw_events = copy.deepcopy(source_run.raw["events"])
+        for raw_event in raw_events:
+            if raw_event["step_id"] == "COLLECT_INVOICE_DATA":
+                raw_event["observed_output"]["amount_basis"] = "tax_exclusive"
+            elif raw_event["step_id"] == "WAIT_USER_SUPPLEMENT":
+                raw_event["observed_output"]["requested_fields"] = [
+                    "buyer_id"
+                ]
+        events = tuple(
+            Event(
+                event_id=raw_event["event_id"],
+                seq=raw_event["seq"],
+                step_id=raw_event["step_id"],
+                step_status=raw_event["step_status"],
+                raw=raw_event,
+            )
+            for raw_event in raw_events
+        )
+        run = dataclasses.replace(
+            source_run,
+            events=events,
+            event_by_id={event.event_id: event for event in events},
+        )
+
+        findings = find_amount_findings(case, run)
+
+        self.assertEqual(
+            [finding.root_cause_label for finding in findings],
+            ["AMOUNT_BASIS"],
+        )
 
 
 class AmountCalculationTests(unittest.TestCase):
