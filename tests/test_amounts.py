@@ -187,6 +187,7 @@ class AmountFindingTests(unittest.TestCase):
                 ("INV-T01", "INV-T01-B", "AMOUNT_BASIS"),
                 ("INV-T02", "INV-T02-A", "AMOUNT_BASIS"),
                 ("INV-T13", "INV-T13-A", "AMOUNT_CALCULATION"),
+                ("INV-V01", "INV-V01-B", "AMOUNT_BASIS"),
                 ("INV-V03", "INV-V03-B", "FIELD_FABRICATION"),
                 ("INV-V07", "INV-V07-B", "AMOUNT_CALCULATION"),
             },

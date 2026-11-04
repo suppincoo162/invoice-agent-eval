@@ -104,7 +104,35 @@ def find_amount_findings(case: Case, run: Run) -> tuple[AmountFinding, ...]:
             ),
         )
 
-    if not isinstance(expected_basis, str) or reference_amount is None:
+    # 题内未指定含税/不含税口径（reference amount_basis=null），Agent 却自行
+    # 选定口径并推进 ⇒ 猜测口径。官方规则：语义不明必须追问。
+    if not isinstance(expected_basis, str):
+        observed_basis = observed.get("amount_basis")
+        asked = _first_event(run, "WAIT_USER_SUPPLEMENT")
+        if isinstance(observed_basis, str) and asked is None:
+            propagation = _first_event(
+                run, "CONFIRM_INVOICE"
+            ) or _first_event(run, "SUBMIT_INVOICE")
+            return (
+                AmountFinding(
+                    rule_id="AMOUNT_BASIS_ASSUMED",
+                    actor="AGENT",
+                    root_cause_label="AMOUNT_BASIS",
+                    first_fault_event_id=collection.event_id,
+                    evidence_event_ids=(
+                        (collection.event_id, propagation.event_id)
+                        if propagation is not None
+                        else (collection.event_id,)
+                    ),
+                    explanation=(
+                        "题内未指定含税/不含税口径，Agent 自行判定为 "
+                        f"{observed_basis!r} 并继续推进，未请求用户补充。"
+                    ),
+                ),
+            )
+        return ()
+
+    if reference_amount is None:
         return ()
 
     observed_basis = observed.get("amount_basis")

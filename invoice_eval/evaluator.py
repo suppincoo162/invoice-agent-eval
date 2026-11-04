@@ -32,6 +32,23 @@ from invoice_eval.workflow import (
 )
 
 
+DOWNSTREAM_CHAIN = {
+    "AMOUNT_BASIS": "金额口径 → 金额三元组 → 预览/提交参数",
+    "AMOUNT_CALCULATION": "金额计算 → 预览金额 → 提交金额",
+    "FIELD_FABRICATION": "缺失字段 → 预览内容（不得以猜测值填充）",
+    "CONTEXT_UPDATE": "多轮输入 → 采集金额 → 预览金额",
+    "MULTI_ITEM_OMISSION": "分录条目 → 预览明细",
+    "TOOL_ARGUMENT_ERROR": "预览参数 → 提交参数",
+    "DUPLICATE_CONTROL": "规则风险结果 → 提交阻断",
+    "CONFIRMATION_BYPASS": "确认前置 → 提交动作",
+    "CALLBACK_MISINTERPRETATION": "回调结果 → 开票结果与快照",
+    "TOOL_ERROR_HANDLING": "工具异常 → 重试或人工核查",
+    "INTENT_CLASSIFICATION": "意图识别 → 后续全流程",
+    "ENTITY_RESOLUTION": "主数据消歧 → 单据主数据字段",
+    "PRODUCT_MATCH": "商品匹配 → 明细物料",
+}
+
+
 IMPROVEMENT_BY_LABEL = {
     "AMOUNT_BASIS": "在采集阶段固定用户指定的含税/不含税口径，并增加口径回归用例。",
     "AMOUNT_CALCULATION": "使用 Decimal 复算金额三元组，并在预览前校验舍入结果。",
@@ -107,6 +124,9 @@ def _assess_run(
 
     workflow_findings = find_workflow_transition_findings(run, workflow)
     protective_rejections = find_protective_rejections(run)
+    # 同一首因事件挂多条同标签根因 ⇒ 合并（保留首条解释并追加差异），
+    # 避免"重复归因"进提交物（官方 schema 允许重复标签，但重复归因会污染证据）。
+    root_causes = _dedupe_root_causes(root_causes)
     penalties = build_penalties(tuple(root_causes))
 
     reference = _as_object(case.raw.get("reference_result")) or {}
@@ -230,6 +250,18 @@ def _assess_run(
             )
         ) or "检测到结果不一致，但无法进一步定位传播。"
 
+    chains = sorted(
+        {
+            DOWNSTREAM_CHAIN[root.label]
+            for root in root_causes
+            if root.label in DOWNSTREAM_CHAIN
+        }
+    )
+    if chains and not task_success:
+        downstream_impact = (
+            downstream_impact + " 已知依赖链：" + "；".join(chains) + "。"
+        )
+
     return AssessedRun(
         payload={
             "run_id": run.run_id,
@@ -296,6 +328,42 @@ def _compare_runs(
         else "investigate"
     )
     return direction, recommendation, reason
+
+
+def _dedupe_root_causes(
+    root_causes: list[RootCause],
+) -> list[RootCause]:
+    """合并 (label, first_fault_event_id) 相同的根因。
+
+    同一首因事件被两条规则各自命中时（如红票缺原票 + 编造金额），
+    只保留一条根因，解释与证据取并集，避免同一故障被重复归因。
+    """
+
+    merged: dict[tuple[str, str | None], RootCause] = {}
+    order: list[tuple[str, str | None]] = []
+    for root in root_causes:
+        key = (root.label, root.first_fault_event_id)
+        existing = merged.get(key)
+        if existing is None:
+            merged[key] = root
+            order.append(key)
+            continue
+        explanation = existing.explanation
+        if root.explanation not in explanation:
+            explanation = f"{explanation} {root.explanation}"
+        evidence = tuple(
+            dict.fromkeys(
+                (*existing.evidence_event_ids, *root.evidence_event_ids)
+            )
+        )
+        merged[key] = RootCause(
+            label=existing.label,
+            first_fault_event_id=existing.first_fault_event_id,
+            evidence_event_ids=evidence,
+            explanation=explanation,
+            actor=existing.actor,
+        )
+    return [merged[key] for key in order]
 
 
 def _improvement_suggestions(

@@ -108,3 +108,22 @@ PY
 - 单 Case 方向与 `version_comparison.direction` **不变**；训练集 14 Case 不受影响（无 `amount_value=null` 样本）。
 
 ⇒ 修复会改动**已定稿版本报告的核心指标**，须项目双人（李经霖 / 王怡然）确认后执行，并重新生成报告数字。
+
+## 八、第二处真实缺口：题内未给口径却自行假定（INV-V01-B）
+
+人工复核时用「独立不变量探测」发现（用 `reference_result` 自推应然违规，再对比规则实然输出）：
+
+| Case / run | 题内目标 | 轨迹事实 | 旧判定 | 复核结论 |
+|---|---|---|---|---|
+| `INV-V01-A` | `amount_basis=null`、`required_action=ASK_AMOUNT_BASIS` | 停在 `WAIT_USER_SUPPLEMENT`，明确问「4800 元是含税还是不含税」 | success=true | **判对** |
+| `INV-V01-B` | 同上 | **自行假定 `amount_basis="tax_exclusive"`** 后继续预览，未询问 | success=true、100 分 | **漏判**：应判失败并归因 `AMOUNT_BASIS`，且 `INV-V01` 方向应为 `baseline_better` 而非 `equal` |
+
+根因同第一处：`find_amount_findings` 在 `expected_basis` 非字符串时提前返回。已修（2026-11-04）。
+
+### 附带发现的第三处：重复归因
+
+`INV-V03-B` 修复后，红票规则与金额编造规则**命中同一首因事件**，输出两条 `FIELD_FABRICATION`。已加根因合并（同 `(label, first_fault_event_id)` 合并，解释与证据取并集）。官方 schema 允许重复标签，但重复归因会稀释证据，故合并。
+
+### ADR-004 试点门槛判定
+
+ADR-004 要求「训练集回归完成 ＋ **至少两个真实的归因缺失或重复**」才评估反事实试点。现已出现**三例**（编造金额漏判、口径自拟漏判、重复归因）⇒ **门槛已满足**。本版按经霖 2026-11-04 决定只做**定性版**（依赖链写进 `downstream_impact` 与方法说明），完整反事实引擎仍不在初赛范围。
