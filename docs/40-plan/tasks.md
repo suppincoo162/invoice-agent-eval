@@ -55,4 +55,4 @@
 
 ## 后续候选（未排期，不影响当前 MVP）
 
-- [ ] **T-021** 试点反事实最小修复与对象感知信用分配 —— 前置：确定性基线完成；灵感与约束见 [`20-design/counterfactual-attribution.md`](../20-design/counterfactual-attribution.md)
+- [ ] **T-021** 评估是否试点反事实最小修复与对象感知信用分配 —— 前置：T-010 完成，且训练集出现至少两个真实归因缺失或重复；即使试点也只能影响内部归因与 `downstream_impact`，不得改变 schema、布尔结论或评分规则。设计与门槛见 [`20-design/counterfactual-attribution.md`](../20-design/counterfactual-attribution.md)、[`20-design/decisions.md`](../20-design/decisions.md) ADR-004
