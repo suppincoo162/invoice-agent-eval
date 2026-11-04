@@ -44,7 +44,7 @@
 
 ## 阶段 C · 模型增强与批量验证（验证完成，模型未接入）
 
-- [ ] **T-009** 接入模型层（复杂解释）；确定性版本必须先通过训练集回归
+- [ ] **T-009** 接入模型层（复杂解释）；确定性版本必须先通过训练集回归 —— ⏸ **2026-11-04 终审定：本版不接入**（[ADR-003](../20-design/decisions.md)；重评估触发见该条）
 - [x] **T-010** 用训练集回归，对比参考标注 —— ✅ 证据：[`tests/test_training_regression.py`](../../tests/test_training_regression.py)（14 Case / 28 run 的布尔、根因、首错、证据和方向全部一致）
 - [x] **T-011** 跑验证集，过格式校验 —— ✅ 证据：[`tests/test_validation_regression.py`](../../tests/test_validation_regression.py)（8 Case / 16 run，场景方向一致且通过官方校验）
 
