@@ -189,6 +189,8 @@ Case
 - `supported_task_types`：`1=蓝票` · `2=红票` · `3=批量开票`
 - `event_requirement`：事件 **18 个必备字段**清单，可当"事件完整性"的机械核对表
 
+> 🔴 **实测例外**：全部公开轨迹中存在 `VALIDATE_DATA → FAIL_TASK`，但流程字典的 `VALIDATE_DATA.possible_next_steps` 未列该边。该转移出现在 `INV-T05-A`（专家判为正确处理）和 `INV-V02-B`。流程字典 `notice` 明确声明它是“对外简化”，因此不能把字典当唯一完备边集；实现需保留有证据的业务终止例外，不能把这两条合法轨迹误报为流程违规。
+
 ## 金额字段实测：精度、自洽与「参数漂移」的机械信号
 
 统计范围：训练 28 运行 + 验证 16 运行的全部金额三元组（`computed_amounts` / `submit.amounts` / `expected_amounts`）。

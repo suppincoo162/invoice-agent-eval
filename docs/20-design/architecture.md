@@ -1,14 +1,40 @@
 # 系统架构
 
-> 状态：**骨架**。待与技术方案一起定稿。
+> 状态：**确定性 MVP 已实现**（2026-11-04）。当前只覆盖 `INV-T01` 所需规则，LLM 默认关闭。
 
-## 待定
+## 当前分层
 
-- [ ] 分层：读取层 / 规则层 / 模型层 / 汇总层 / 输出层
-- [ ] 技术栈选择（Python？是否用 LLM API？用哪家？）
-- [ ] 确定性规则 vs 模型判断的**分界线**（这是本题的核心设计）
-- [ ] 失败兜底：模型不可用时降级到什么
-- [ ] 可复现性：固定种子 / 固定模型版本 / 结果缓存
+```text
+官方 JSONL + 流程字典
+        ↓
+invoice_eval/data.py + models.py
+  Case / Run / Event 索引
+        ↓
+workflow.py · amounts.py · confirmation.py · tooling.py
+  确定性 findings / root causes
+        ↓
+scoring.py
+  penalty ledger + quality_score
+        ↓
+evaluator.py
+  run assessment + version comparison
+        ↓
+cli.py
+  submission JSONL
+```
+
+- 读取层保留完整 `raw`，事件只在所属 run 内索引。
+- 规则层只使用同一 run 的真实字段和 `event_id`。
+- 评分层只对已证实且责任对象为 Agent 的独立根因扣分。
+- LLM 层尚未接入；未来只能处理证据已结构化的语义辅助，不能修改确定性事实和分数。
+- 确定性版本不依赖网络或模型，可独立生成 schema 输出。
+
+## 尚未实现
+
+- 重复、取消、超时、批量与红票规则；
+- 训练集完整语义回归与验证集全量输出；
+- LLM 语义增强与置信度校准；
+- 批量版本报告。
 
 ## 一条已定的方向（来自手册）
 
