@@ -113,18 +113,22 @@ def _assess_run(
     invoice_created = run.raw.get("invoice_created")
     invoice_field_valid = isinstance(invoice_created, bool)
     business_invoice_created = invoice_created if invoice_field_valid else False
+    reference_complete = (
+        reference.get("invoice_should_exist") is not None
+        and reference.get("acceptable_snapshot_state") is not None
+    )
     invoice_matches = (
-        reference.get("invoice_should_exist") is None
-        or business_invoice_created
-        == reference.get("invoice_should_exist")
+        reference_complete
+        and business_invoice_created == reference.get("invoice_should_exist")
     )
     state_matches = (
-        reference.get("acceptable_snapshot_state") is None
-        or run.raw.get("final_state")
+        reference_complete
+        and run.raw.get("final_state")
         == reference.get("acceptable_snapshot_state")
     )
     task_success = (
-        not root_causes
+        reference_complete
+        and not root_causes
         and not workflow_findings
         and invoice_matches
         and state_matches
@@ -132,7 +136,24 @@ def _assess_run(
     )
 
     unscorable = False
-    if not task_success and not root_causes:
+    if not reference_complete and not root_causes and not workflow_findings:
+        # 题内目标缺失时不得默认「无所谓」——那是把未知当成功。
+        # 按官方口径（缺证据就说不确定）降级为 INSUFFICIENT_EVIDENCE 并标不可评分。
+        evidence = _last_event_ids(run)
+        root_causes.append(
+            RootCause(
+                label="INSUFFICIENT_EVIDENCE",
+                first_fault_event_id=None,
+                evidence_event_ids=evidence,
+                explanation=(
+                    "Case 的题内目标不完整（reference_result 缺少 "
+                    "invoice_should_exist 或 acceptable_snapshot_state），"
+                    "无法判定该运行是否达成目标；按证据不足处理。"
+                ),
+                actor="UNKNOWN",
+            )
+        )
+    elif not task_success and not root_causes:
         evidence = _workflow_evidence(workflow_findings) or _last_event_ids(
             run
         )

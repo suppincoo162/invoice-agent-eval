@@ -19,10 +19,15 @@
 - `docs/40-plan/tasks.md` 每条任务带**证据指针**（文件/测试/行号），可逐条回核——本次复审正是靠它把验收面穷举出来的。
 - 交付文档齐：`50-deliverables/method.md`（方法）＋ `version-report.md`（版本报告，明确标注"程序预测 ≠ 专家标签"、结论 `investigate`）。
 
-## 三、未完成项（均不阻塞交付）
+## 三、二轮复审补的两处（2026-11-04 当天闭环）
+
+1. **题内目标缺失不再默认成功**：`reference_result` 缺 `invoice_should_exist` / `acceptable_snapshot_state` 时，旧逻辑让匹配条件恒为 `True`（可能把"不知道目标"判成成功）。已改为**降级 `INSUFFICIENT_EVIDENCE` 且不可评分**，并补正控/负控各一条。回归证据：改动前后 22 个公开 Case 输出**逐字节一致**。
+2. **依赖说明补齐**：README 新增「运行与环境（依赖说明）」——Python ≥3.10、**无第三方依赖**、运行与自测命令；同时补 CI（push/PR 自动 `pytest`）与「交付件核对清单」（`40-plan/tasks.md` 阶段 D）。
+
+## 四、仍未完成项（均不阻塞交付）
 
 1. **T-009 接入模型层** 未做；对应 **ADR-003 已定稿：本版不接入**（理由见 ADR-003）。
-2. **打包口径**：仓库内无 `pyproject.toml` / `requirements.txt`。零第三方依赖下可以不建，但建议在 README 写明运行入口与 Python ≥3.10，避免评审核环境。
+2. **`QUALITY` 口径提醒**：`quality_score=0` 既表"极差"也当"不可评分哨兵"，若官方按均值排名会拉低——已在 `method.md` 标明，提交时知悉即可。
 3. 开发分支 `ljl/dev`、`wyr/dev` 按 `docs/git-workflow.md` 是常驻分支（合并后不删），非缺陷。
 
 ## 四、证据边界（这份报告不能证明什么）

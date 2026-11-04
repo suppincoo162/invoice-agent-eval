@@ -49,6 +49,17 @@
 - [x] **T-011** 跑验证集，过格式校验 —— ✅ 证据：[`tests/test_validation_regression.py`](../../tests/test_validation_regression.py)（8 Case / 16 run，场景方向一致且通过官方校验）
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
+### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）
+
+| 交付件 | 状态 | 位置 |
+|---|---|---|
+| 可运行程序 | ✅ | `python -m invoice_eval evaluate --cases … --output …` |
+| 源代码 | ✅ | `invoice_eval/`（17 模块） |
+| **依赖说明** | ✅ | `README.md`「运行与环境（依赖说明）」——Python ≥3.10，**无第三方依赖** |
+| 方法说明 | ✅ | `docs/50-deliverables/method.md`（含 `quality_score` 构成） |
+| 版本评估报告 | ✅ | `docs/50-deliverables/version-report.md` |
+
+> 漏项教训：14 份文档都写了，唯独「依赖说明」没人核对——**因为交付件从来没有 checklist**。本表就是那个 checklist，交稿前逐行打勾。
 
 - [x] **T-012** 写方法说明 —— ✅ 证据：[`50-deliverables/method.md`](../50-deliverables/method.md)
 - [x] **T-013** 写版本评估报告 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)

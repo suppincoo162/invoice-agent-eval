@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import subprocess
 import sys
@@ -22,6 +23,41 @@ class EvaluatorTests(unittest.TestCase):
         cls.dataset = load_dataset(TRAINING_CASES)
         cls.workflow = load_workflow(WORKFLOW_PATH)
         cls.case = cls.dataset.get_case("INV-T01")
+
+    def test_missing_reference_target_yields_insufficient_evidence(self) -> None:
+        """题内目标缺字段时不得默认成功：应降级为 INSUFFICIENT_EVIDENCE 且不可评分。
+
+        旧行为：invoice_should_exist 缺失 ⇒ invoice_matches 自动为 True，
+        可能把「不知道目标」误判成「成功」。本条锁住新口径。
+        """
+
+        raw = json.loads(json.dumps(self.case.raw))
+        raw["reference_result"].pop("invoice_should_exist")
+        case = dataclasses.replace(self.case, raw=raw)
+
+        baseline = evaluate_case(case, self.workflow)["run_assessments"][0]
+
+        self.assertFalse(baseline["agent_task_success"])
+        self.assertEqual(baseline["quality_score"], 0)
+        labels = [root["label"] for root in baseline["root_causes"]]
+        self.assertIn("INSUFFICIENT_EVIDENCE", labels)
+        self.assertTrue(
+            any(
+                "题内目标不完整" in root["explanation"]
+                for root in baseline["root_causes"]
+            )
+        )
+
+    def test_complete_reference_target_does_not_yield_insufficient_evidence(
+        self,
+    ) -> None:
+        """负控：目标字段齐全的正常 Case 不得误触发 INSUFFICIENT_EVIDENCE。"""
+
+        baseline = evaluate_case(self.case, self.workflow)["run_assessments"][0]
+
+        labels = [root["label"] for root in baseline["root_causes"]]
+        self.assertTrue(baseline["agent_task_success"])
+        self.assertNotIn("INSUFFICIENT_EVIDENCE", labels)
 
     def test_evaluates_inv_t01_end_to_end(self) -> None:
         result = evaluate_case(self.case, self.workflow)
