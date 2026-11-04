@@ -45,6 +45,19 @@
 
 **只用一个 `main` 分支 + 各自本地开发分支 + MR 合并** —— 完整规范见 [`docs/git-workflow.md`](docs/git-workflow.md)。
 
+## 运行与环境（依赖说明）
+
+- **环境**：Python **≥ 3.10**（用到 `X | Y` 类型标注语法）。
+- **第三方依赖：无**。全部为标准库（`argparse` / `json` / `pathlib` / `dataclasses` / `decimal` / `typing` / `collections`），**不需要 `pip install`**，也无任何 LLM / API / 网络调用。
+- **运行**：
+
+  ```bash
+  python -m invoice_eval evaluate --cases <cases.jsonl> --output <submission.jsonl>
+  ```
+
+- **自测**：`python -m pytest -q`（未装 pytest 时用 `python -m unittest discover -s tests -q`）。
+- **官方格式校验**：`python docs/00-brief/data/08_提交格式校验.py --cases <cases> --submission <out>`。
+
 ## 当前状态（**as of 2026-11-04** · 快照，非实时）
 
 > 实时进度只在一处维护：[`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)。以下是带日期的快照，方便"刚拿到仓库的人/Agent"一眼判断该不该往下干。

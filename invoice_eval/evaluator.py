@@ -32,6 +32,23 @@ from invoice_eval.workflow import (
 )
 
 
+DOWNSTREAM_CHAIN = {
+    "AMOUNT_BASIS": "金额口径 → 金额三元组 → 预览/提交参数",
+    "AMOUNT_CALCULATION": "金额计算 → 预览金额 → 提交金额",
+    "FIELD_FABRICATION": "缺失字段 → 预览内容（不得以猜测值填充）",
+    "CONTEXT_UPDATE": "多轮输入 → 采集金额 → 预览金额",
+    "MULTI_ITEM_OMISSION": "分录条目 → 预览明细",
+    "TOOL_ARGUMENT_ERROR": "预览参数 → 提交参数",
+    "DUPLICATE_CONTROL": "规则风险结果 → 提交阻断",
+    "CONFIRMATION_BYPASS": "确认前置 → 提交动作",
+    "CALLBACK_MISINTERPRETATION": "回调结果 → 开票结果与快照",
+    "TOOL_ERROR_HANDLING": "工具异常 → 重试或人工核查",
+    "INTENT_CLASSIFICATION": "意图识别 → 后续全流程",
+    "ENTITY_RESOLUTION": "主数据消歧 → 单据主数据字段",
+    "PRODUCT_MATCH": "商品匹配 → 明细物料",
+}
+
+
 IMPROVEMENT_BY_LABEL = {
     "AMOUNT_BASIS": "在采集阶段固定用户指定的含税/不含税口径，并增加口径回归用例。",
     "AMOUNT_CALCULATION": "使用 Decimal 复算金额三元组，并在预览前校验舍入结果。",
@@ -41,7 +58,7 @@ IMPROVEMENT_BY_LABEL = {
     "TOOL_ERROR_HANDLING": "状态不明时停止自动重试并转人工核查。",
     "TOOL_ARGUMENT_ERROR": "提交参数必须直接复制已确认预览并做逐字段比较。",
     "INTENT_CLASSIFICATION": "保留取消、开票和红票等任务意图的任务级回归样例。",
-    "FIELD_FABRICATION": "缺少必要字段时必须请求用户补充，不得产生猜测值。",
+    "FIELD_FABRICATION": "缺少必要字段（含金额）时必须请求用户补充，不得产生猜测值。",
     "ENTITY_RESOLUTION": "存在多个候选时必须等待用户消歧，不得擅自选择。",
     "PRODUCT_MATCH": "商品匹配必须保留用户所指项目，并增加相似名称回归样例。",
     "CONTEXT_UPDATE": "多轮修改后必须使用最新值，并为已被覆盖的旧值增加回归样例。",
@@ -107,24 +124,31 @@ def _assess_run(
 
     workflow_findings = find_workflow_transition_findings(run, workflow)
     protective_rejections = find_protective_rejections(run)
+    # 同一首因事件挂多条同标签根因 ⇒ 合并（保留首条解释并追加差异），
+    # 避免"重复归因"进提交物（官方 schema 允许重复标签，但重复归因会污染证据）。
+    root_causes = _dedupe_root_causes(root_causes)
     penalties = build_penalties(tuple(root_causes))
 
     reference = _as_object(case.raw.get("reference_result")) or {}
     invoice_created = run.raw.get("invoice_created")
     invoice_field_valid = isinstance(invoice_created, bool)
     business_invoice_created = invoice_created if invoice_field_valid else False
+    reference_complete = (
+        reference.get("invoice_should_exist") is not None
+        and reference.get("acceptable_snapshot_state") is not None
+    )
     invoice_matches = (
-        reference.get("invoice_should_exist") is None
-        or business_invoice_created
-        == reference.get("invoice_should_exist")
+        reference_complete
+        and business_invoice_created == reference.get("invoice_should_exist")
     )
     state_matches = (
-        reference.get("acceptable_snapshot_state") is None
-        or run.raw.get("final_state")
+        reference_complete
+        and run.raw.get("final_state")
         == reference.get("acceptable_snapshot_state")
     )
     task_success = (
-        not root_causes
+        reference_complete
+        and not root_causes
         and not workflow_findings
         and invoice_matches
         and state_matches
@@ -132,7 +156,24 @@ def _assess_run(
     )
 
     unscorable = False
-    if not task_success and not root_causes:
+    if not reference_complete and not root_causes and not workflow_findings:
+        # 题内目标缺失时不得默认「无所谓」——那是把未知当成功。
+        # 按官方口径（缺证据就说不确定）降级为 INSUFFICIENT_EVIDENCE 并标不可评分。
+        evidence = _last_event_ids(run)
+        root_causes.append(
+            RootCause(
+                label="INSUFFICIENT_EVIDENCE",
+                first_fault_event_id=None,
+                evidence_event_ids=evidence,
+                explanation=(
+                    "Case 的题内目标不完整（reference_result 缺少 "
+                    "invoice_should_exist 或 acceptable_snapshot_state），"
+                    "无法判定该运行是否达成目标；按证据不足处理。"
+                ),
+                actor="UNKNOWN",
+            )
+        )
+    elif not task_success and not root_causes:
         evidence = _workflow_evidence(workflow_findings) or _last_event_ids(
             run
         )
@@ -209,6 +250,18 @@ def _assess_run(
             )
         ) or "检测到结果不一致，但无法进一步定位传播。"
 
+    chains = sorted(
+        {
+            DOWNSTREAM_CHAIN[root.label]
+            for root in root_causes
+            if root.label in DOWNSTREAM_CHAIN
+        }
+    )
+    if chains and not task_success:
+        downstream_impact = (
+            downstream_impact + " 已知依赖链：" + "；".join(chains) + "。"
+        )
+
     return AssessedRun(
         payload={
             "run_id": run.run_id,
@@ -275,6 +328,42 @@ def _compare_runs(
         else "investigate"
     )
     return direction, recommendation, reason
+
+
+def _dedupe_root_causes(
+    root_causes: list[RootCause],
+) -> list[RootCause]:
+    """合并 (label, first_fault_event_id) 相同的根因。
+
+    同一首因事件被两条规则各自命中时（如红票缺原票 + 编造金额），
+    只保留一条根因，解释与证据取并集，避免同一故障被重复归因。
+    """
+
+    merged: dict[tuple[str, str | None], RootCause] = {}
+    order: list[tuple[str, str | None]] = []
+    for root in root_causes:
+        key = (root.label, root.first_fault_event_id)
+        existing = merged.get(key)
+        if existing is None:
+            merged[key] = root
+            order.append(key)
+            continue
+        explanation = existing.explanation
+        if root.explanation not in explanation:
+            explanation = f"{explanation} {root.explanation}"
+        evidence = tuple(
+            dict.fromkeys(
+                (*existing.evidence_event_ids, *root.evidence_event_ids)
+            )
+        )
+        merged[key] = RootCause(
+            label=existing.label,
+            first_fault_event_id=existing.first_fault_event_id,
+            evidence_event_ids=evidence,
+            explanation=explanation,
+            actor=existing.actor,
+        )
+    return [merged[key] for key in order]
 
 
 def _improvement_suggestions(

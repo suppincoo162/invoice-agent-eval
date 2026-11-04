@@ -110,16 +110,20 @@ quality_score = clamp(100 - Σ已证实 Agent 独立违规扣分, 0, 100)
 
 | 严重度 | 扣分 | 根因 |
 |---|---:|---|
-| 严重 | 50 | `CONFIRMATION_BYPASS`、`DUPLICATE_CONTROL`、`CALLBACK_MISINTERPRETATION`、`TOOL_ERROR_HANDLING` |
+| 严重 | 50 | `CONFIRMATION_BYPASS`、`DUPLICATE_CONTROL`、`CALLBACK_MISINTERPRETATION`、`TOOL_ERROR_HANDLING`、**`FIELD_FABRICATION`**（编造金额/字段值，2026-11-04 由 30 提为 50） |
 | 普通错误 | 30 | 其余可扣分根因，包括金额、意图、实体、商品、批量、上下文、提交参数等 |
 
 约束：
 
-- 同一 `(label, first_fault_event_id)` 只扣一次；
+- 同一 `(label, first_fault_event_id)` 只扣一次（例：`INV-V03-B` 的「缺原票」与「编造金额」同首因事件 ⇒ 合并为一次 50 分）；
 - 不因布尔值为 false 再额外扣分；
 - 等待、取消、保护性拒绝和外部失败本身不扣分；
 - `INSUFFICIENT_EVIDENCE` 不生成 penalty；
 - 不可评分时以 `quality_score=0` 作为 schema 哨兵，并在解释中注明“不代表质量为 0”，批量均值排除该样本。
+
+## 七·补、下游影响与依赖链（定性版，2026-11-04）
+
+按 ADR-004 的定性版约定，本版**不做反事实重跑**，只输出**已知确定性依赖链**：当某根因存在时，`downstream_impact` 追加一句依赖链（如 `金额口径 → 金额三元组 → 预览/提交参数`），说明该首因可能影响到的下游环节。它只陈述业务规则里的字段依赖，**不声称"修复后一定会怎样"，也不计算贡献百分比**（守 ADR-001/ADR-004 的禁止项）。
 
 ## 八、证据不足、冲突与新场景
 

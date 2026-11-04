@@ -78,6 +78,44 @@ class WorkflowTransitionTests(unittest.TestCase):
         self.assertEqual(findings[0].from_step_id, None)
         self.assertEqual(findings[0].to_step_id, "SUBMIT_INVOICE")
 
+    def test_rejects_trajectory_missing_required_middle_step(self) -> None:
+        """轨迹缺一个必经中间步：相邻两步不在白名单内，必须报 WORKFLOW_TRANSITION。
+
+        形态与「跨多步乱跳」不同——这是真实评测里常见的「某步未被记录 / 轨迹被截断
+        一段」；判据看的是删除后相邻的 (from, to) 是否仍合法。
+        """
+
+        run = _run_with_steps(("RECEIVE_REQUEST", "RESOLVE_ENTERPRISE"))
+
+        findings = find_workflow_transition_findings(run, self.workflow)
+
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].rule_id, "WORKFLOW_TRANSITION")
+        self.assertEqual(findings[0].from_step_id, "RECEIVE_REQUEST")
+        self.assertEqual(findings[0].to_step_id, "RESOLVE_ENTERPRISE")
+
+    def test_truncated_legal_prefix_has_no_findings(self) -> None:
+        """合法轨迹截短（丢掉末尾事件）仍是合法前缀，不得报违规。
+
+        负控：防止把「记录不全」误判为「流程违规」。这条曾经是真实误判点——
+        删掉末事件后相邻转移依然合法时，报告为空才是正确行为。
+        """
+
+        dataset = load_dataset(DATA_DIR / "02_公开训练轨迹.jsonl")
+        run = dataset.get_case("INV-T01").get_run("INV-T01-A")
+        events = run.events[:-1]
+        truncated = Run(
+            run_id=run.run_id,
+            events=events,
+            event_by_id={event.event_id: event for event in events},
+            raw=run.raw,
+        )
+
+        self.assertEqual(
+            find_workflow_transition_findings(truncated, self.workflow),
+            (),
+        )
+
     def test_terminal_step_cannot_transition_again(self) -> None:
         run = _run_with_steps(
             (
