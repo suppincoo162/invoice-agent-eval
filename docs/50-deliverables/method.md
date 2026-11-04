@@ -110,12 +110,12 @@ quality_score = clamp(100 - Σ已证实 Agent 独立违规扣分, 0, 100)
 
 | 严重度 | 扣分 | 根因 |
 |---|---:|---|
-| 严重 | 50 | `CONFIRMATION_BYPASS`、`DUPLICATE_CONTROL`、`CALLBACK_MISINTERPRETATION`、`TOOL_ERROR_HANDLING` |
+| 严重 | 50 | `CONFIRMATION_BYPASS`、`DUPLICATE_CONTROL`、`CALLBACK_MISINTERPRETATION`、`TOOL_ERROR_HANDLING`、**`FIELD_FABRICATION`**（编造金额/字段值，2026-11-04 由 30 提为 50） |
 | 普通错误 | 30 | 其余可扣分根因，包括金额、意图、实体、商品、批量、上下文、提交参数等 |
 
 约束：
 
-- 同一 `(label, first_fault_event_id)` 只扣一次；
+- 同一 `(label, first_fault_event_id)` 只扣一次（例：`INV-V03-B` 的「缺原票」与「编造金额」同首因事件 ⇒ 合并为一次 50 分）；
 - 不因布尔值为 false 再额外扣分；
 - 等待、取消、保护性拒绝和外部失败本身不扣分；
 - `INSUFFICIENT_EVIDENCE` 不生成 penalty；

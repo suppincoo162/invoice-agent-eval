@@ -22,6 +22,7 @@
 ## 三、二轮复审补的两处（2026-11-04 当天闭环）
 
 1. **题内目标缺失不再默认成功**：`reference_result` 缺 `invoice_should_exist` / `acceptable_snapshot_state` 时，旧逻辑让匹配条件恒为 `True`（可能把"不知道目标"判成成功）。已改为**降级 `INSUFFICIENT_EVIDENCE` 且不可评分**，并补正控/负控各一条。回归证据：改动前后 22 个公开 Case 输出**逐字节一致**。
+3. **编造金额漏判已修**：`INV-V03-B` 在题内未给金额时填入 100000，此前无任何规则命中；现按官方标签 `FIELD_FABRICATION`（严重度 50）计入，分数 70→50，候选版均分与基线持平。详见 [`30-tdd/rule-coverage-audit.md`](../30-tdd/rule-coverage-audit.md) §七。
 2. **依赖说明补齐**：README 新增「运行与环境（依赖说明）」——Python ≥3.10、**无第三方依赖**、运行与自测命令；同时补 CI（push/PR 自动 `pytest`）与「交付件核对清单」（`40-plan/tasks.md` 阶段 D）。
 
 ## 四、仍未完成项（均不阻塞交付）

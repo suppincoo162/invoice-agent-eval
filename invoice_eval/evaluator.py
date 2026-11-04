@@ -41,7 +41,7 @@ IMPROVEMENT_BY_LABEL = {
     "TOOL_ERROR_HANDLING": "状态不明时停止自动重试并转人工核查。",
     "TOOL_ARGUMENT_ERROR": "提交参数必须直接复制已确认预览并做逐字段比较。",
     "INTENT_CLASSIFICATION": "保留取消、开票和红票等任务意图的任务级回归样例。",
-    "FIELD_FABRICATION": "缺少必要字段时必须请求用户补充，不得产生猜测值。",
+    "FIELD_FABRICATION": "缺少必要字段（含金额）时必须请求用户补充，不得产生猜测值。",
     "ENTITY_RESOLUTION": "存在多个候选时必须等待用户消歧，不得擅自选择。",
     "PRODUCT_MATCH": "商品匹配必须保留用户所指项目，并增加相似名称回归样例。",
     "CONTEXT_UPDATE": "多轮修改后必须使用最新值，并为已被覆盖的旧值增加回归样例。",

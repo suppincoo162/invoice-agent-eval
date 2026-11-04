@@ -74,11 +74,37 @@ def find_amount_findings(case: Case, run: Run) -> tuple[AmountFinding, ...]:
 
     expected_basis = reference.get("amount_basis")
     reference_amount = reference.get("amount_value")
-    if not isinstance(expected_basis, str) or reference_amount is None:
-        return ()
 
     observed = _as_object(collection.raw.get("observed_output"))
     if observed is None:
+        return ()
+
+    # 题内没有给出金额（reference_result.amount_value 为 null），Agent 却填入了
+    # 具体数值 ⇒ 编造。官方规则：缺少必要信息必须追问，不得猜测。
+    if reference_amount is None and observed.get("amount_value") is not None:
+        propagation = _first_event(
+            run, "CONFIRM_INVOICE"
+        ) or _first_event(run, "SUBMIT_INVOICE")
+        fabricated = _decimal_text(_money(observed["amount_value"]))
+        return (
+            AmountFinding(
+                rule_id="AMOUNT_FABRICATION_CHECK",
+                actor="AGENT",
+                root_cause_label="FIELD_FABRICATION",
+                first_fault_event_id=collection.event_id,
+                evidence_event_ids=(
+                    (collection.event_id, propagation.event_id)
+                    if propagation is not None
+                    else (collection.event_id,)
+                ),
+                explanation=(
+                    f"题内未提供金额，Agent 自行填入 {fabricated}，"
+                    f"属编造而非追问。"
+                ),
+            ),
+        )
+
+    if not isinstance(expected_basis, str) or reference_amount is None:
         return ()
 
     observed_basis = observed.get("amount_basis")

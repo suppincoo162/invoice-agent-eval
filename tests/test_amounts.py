@@ -1,3 +1,5 @@
+import copy
+import dataclasses
 import unittest
 from decimal import Decimal
 from pathlib import Path
@@ -11,6 +13,36 @@ from invoice_eval import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "docs" / "00-brief" / "data"
+
+
+class AmountFabricationTests(unittest.TestCase):
+    """题内未给出金额时，Agent 不得自行填入数值（官方规则：缺信息必须追问）。"""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.dataset = load_dataset(DATA_DIR / "02_公开训练轨迹.jsonl")
+
+    def test_unprovided_amount_filled_by_agent_is_flagged(self) -> None:
+        case = self.dataset.get_case("INV-T01")
+        raw = copy.deepcopy(case.raw)
+        raw["reference_result"]["amount_value"] = None
+        raw["reference_result"]["expected_amounts"] = None
+        case = dataclasses.replace(case, raw=raw)
+
+        findings = find_amount_findings(case, case.runs[0])
+
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].rule_id, "AMOUNT_FABRICATION_CHECK")
+        self.assertEqual(findings[0].root_cause_label, "FIELD_FABRICATION")
+        self.assertEqual(findings[0].actor, "AGENT")
+
+    def test_provided_amount_is_not_flagged(self) -> None:
+        case = self.dataset.get_case("INV-T01")
+        rule_ids = [
+            finding.rule_id
+            for finding in find_amount_findings(case, case.runs[0])
+        ]
+        self.assertNotIn("AMOUNT_FABRICATION_CHECK", rule_ids)
 
 
 class AmountCalculationTests(unittest.TestCase):
@@ -155,6 +187,7 @@ class AmountFindingTests(unittest.TestCase):
                 ("INV-T01", "INV-T01-B", "AMOUNT_BASIS"),
                 ("INV-T02", "INV-T02-A", "AMOUNT_BASIS"),
                 ("INV-T13", "INV-T13-A", "AMOUNT_CALCULATION"),
+                ("INV-V03", "INV-V03-B", "FIELD_FABRICATION"),
                 ("INV-V07", "INV-V07-B", "AMOUNT_CALCULATION"),
             },
         )
