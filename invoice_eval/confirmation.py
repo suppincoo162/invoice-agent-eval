@@ -2,10 +2,21 @@ from __future__ import annotations
 
 from typing import Any
 
-from invoice_eval.models import Event, RootCause, Run
+from invoice_eval.models import Case, Event, RootCause, Run
 
 
-def find_confirmation_root_causes(run: Run) -> tuple[RootCause, ...]:
+def find_confirmation_root_causes(
+    case: Case, run: Run
+) -> tuple[RootCause, ...]:
+    reference = case.raw.get("reference_result")
+    if (
+        isinstance(reference, dict)
+        and reference.get("required_action") == "CANCEL"
+    ):
+        # Cancellation is the governing task intent. A later submit is handled
+        # by the cancellation rule, not as a second confirmation root cause.
+        return ()
+
     submit = _first_event(run, "SUBMIT_INVOICE")
     if submit is None:
         return ()

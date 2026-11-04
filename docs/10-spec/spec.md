@@ -186,6 +186,87 @@ quality_score = clamp(
 - `INV-T05-B`：`DUPLICATE_CONTROL` 扣 50，`quality_score=50`。
 - `INV-T14-B`：`TOOL_ARGUMENT_ERROR` 扣 30，`quality_score=70`。
 
+## 风控规则的首因优先级（T-006）
+
+### 重复开票风险
+
+- `context.risk_flags` 或 `rules.validate` 的明确工具结果出现 `DUPLICATE_INVOICE` 时，视为权威风险。
+- Agent 在 `VALIDATE_DATA.observed_output` 中抹去该风险，或仍把校验标记为通过/允许创建，首因即该 `VALIDATE_DATA` 事件。
+- 风险已保留且流程合法阻断时，不产生 `DUPLICATE_CONTROL`。
+- 工具给出风险本身是正确保护行为，不归责工具。
+
+### 用户取消
+
+- `reference_result.required_action=CANCEL` 时，取消是当前任务的支配意图。
+- 若 `PARSE_INTENT.intent` 不是 `CANCEL`，首因是 `PARSE_INTENT`，根因为 `INTENT_CLASSIFICATION`；后续错误开票流程属于传播，不再额外记为 `CONFIRMATION_BYPASS`。
+- 若 Agent 已识别并执行 `CANCEL_TASK`，之后仍出现 `SUBMIT_INVOICE`，首因是后续提交事件，根因为 `CONFIRMATION_BYPASS`。
+
+### 提交超时与未知状态
+
+- `submit_status=unknown` 或 `step_status=TIMED_OUT` 只表示结果未知，不自动构成 Agent 错误。
+- 首次提交后停止自动操作并转人工核查是正确结果。
+- 在结果未知且没有稳定、一致幂等键的情况下重复调用 `invoice.submit`，首因是重复提交事件，根因为 `TOOL_ERROR_HANDLING`。
+- 有稳定幂等键也不能替代对重试依据的要求；缺少明确依据时仍应保守处理。
+
+## 红票与批量任务（T-007）
+
+### 任务类型
+
+- `PARSE_INTENT.invoice_task_type` 必须与 `reference_result.invoice_task_type` 一致。
+- 期望 `RED` 或 `BATCH` 但识别为其他类型时，首因是 `PARSE_INTENT`，根因为 `INTENT_CLASSIFICATION`；后续预览或提交用于证明传播。
+- 正确预览后等待确认时，预览中的 `invoice_task_type` 必须保持任务类型。
+
+### 红票原票引用
+
+- `context.original_invoice_id` 有值时，采集和预览必须保持相同原票编号。
+- 原票编号属于 `context.required_missing_fields` 时，正确行为是在 `missing_fields` 中保留该字段，并通过 `WAIT_USER_SUPPLEMENT.requested_fields` 请求用户补充。
+- Agent 未请求原票编号却继续生成开票内容，首因是 `COLLECT_INVOICE_DATA`，根因为 `FIELD_FABRICATION`。
+- 不得根据客户、金额或商品自动补造原票编号；不得调用原票查询后再声称用户已提供。
+
+### 批量明细
+
+- 对 `expected_line_items` 逐项比较 `item_id` 和 `exclusive_amount`，重复条目必须保留重复次数。
+- 明细按多重集合比较，允许展示顺序不同，但遗漏、合并、增加和重复均视为不一致。
+- `line_count` 必须与明细数量一致，不能只依赖 `line_count` 判断完整性。
+- 首个错误出现在采集或预览时，首因是该事件，根因为 `MULTI_ITEM_OMISSION`。
+- 采集和预览完整、仅提交参数发生漂移时，不归入本规则；按 `TOOL_ARGUMENT_ERROR` 处理。
+
+## 实体、商品、回调与提交参数（T-010）
+
+### 购方缺失与消歧
+
+- `required_action=ASK_BUYER` 时，Agent 应在 `missing_fields` 中保留 `buyer_id` 并通过 `WAIT_USER_SUPPLEMENT` 请求补充。
+- 用户未提供购方但 Agent 写入一个值，首因是 `COLLECT_INVOICE_DATA`，根因为 `FIELD_FABRICATION`。
+- `required_action=ASK_BUYER_DISAMBIGUATION` 或 `buyer_disambiguation_required=true` 时，存在多个候选必须等待用户选择。
+- 多个候选下 Agent 直接选择其中一个，首因是 `COLLECT_INVOICE_DATA`，根因为 `ENTITY_RESOLUTION`。
+
+### 商品匹配
+
+- `COLLECT_INVOICE_DATA.item_id` 应与 `reference_result.item_id` 一致。
+- 采集商品错误时，首因是 `COLLECT_INVOICE_DATA`，根因为 `PRODUCT_MATCH`。
+- 采集正确但预览中的 `item_id` 漂移时，首因是 `CONFIRM_INVOICE`。
+
+### 回调结果
+
+- `WAIT_INVOICE_CALLBACK.callback_status` 是开票结果的权威服务事实。
+- 回调明确为 `failed`，后续却进入 `COMPLETE_TASK`、`result_code=E200` 或宣称成功时，首因是回调事件，根因为 `CALLBACK_MISINTERPRETATION`。
+- 回调失败后如实进入 `FAIL_TASK` 不产生根因。
+
+### 提交参数漂移
+
+- 只有存在本次已确认预览时，才比较提交参数。
+- 比较 `buyer_id`、`item_id`、`invoice_task_type`、`amounts`、`line_count`、`line_items` 和 `original_invoice_id`。
+- 任何字段与已确认预览不一致时，首因是 `SUBMIT_INVOICE`，根因为 `TOOL_ARGUMENT_ERROR`。
+- 提交参数漂移不改变已经实际发生的 `invoice_created`；它只说明提交内容与确认内容不一致。
+
+## 多轮上下文更新（T-011）
+
+- `context.conversation_rounds` 存在时，带 `supersedes_round` 的轮次覆盖其指向的旧轮次。
+- 当前任务的金额以 `reference_result.amount_value` 和未被覆盖的最新轮次为准。
+- Agent 在采集阶段使用已被覆盖的旧轮次金额时，首因是 `COLLECT_INVOICE_DATA`，根因为 `CONTEXT_UPDATE`。
+- 仍使用旧金额生成的预览或提交是传播，不得重复归为 `AMOUNT_CALCULATION`。
+- 新金额与旧金额恰好相同、无法区分覆盖关系，或轮次引用无法解析时，不凭猜测归因。
+
 ## 待补清单
 
 - [ ] 把四项工作拆成更细的可验收条目
