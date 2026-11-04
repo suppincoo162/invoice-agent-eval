@@ -16,14 +16,16 @@ class ConfirmationTests(unittest.TestCase):
     def test_waits_without_submission_without_finding(self) -> None:
         case = self.dataset.get_case("INV-T01")
         self.assertEqual(
-            find_confirmation_root_causes(case.get_run("INV-T01-A")),
+            find_confirmation_root_causes(
+                case, case.get_run("INV-T01-A")
+            ),
             (),
         )
 
     def test_detects_not_confirmed_submit(self) -> None:
         case = self.dataset.get_case("INV-T01")
         root_causes = find_confirmation_root_causes(
-            case.get_run("INV-T01-B")
+            case, case.get_run("INV-T01-B")
         )
 
         self.assertEqual(len(root_causes), 1)
@@ -43,7 +45,7 @@ class ConfirmationTests(unittest.TestCase):
     def test_detects_confirmation_bypass_in_second_case(self) -> None:
         case = self.dataset.get_case("INV-T11")
         root_causes = find_confirmation_root_causes(
-            case.get_run("INV-T11-B")
+            case, case.get_run("INV-T11-B")
         )
 
         self.assertEqual(

@@ -1,7 +1,7 @@
 # 任务拆分
 
 > **本文件是「现在在推什么」的唯一主位置。**
-> 当前阶段＝**阶段 A、B0、B1 已完成；下一步进入 B2 确定性规则扩展**（as of 2026-11-04）。
+> 当前阶段＝**确定性评测与训练/验证集回归已完成；下一步交付与可选的模型增强**（as of 2026-11-04）。
 > 完成的判定**必须有证据指针**（文档 / commit / 命令输出），不靠记忆。
 
 ## 阶段 A · 备料（事实层）—— ✅ 已完成 2026-10-31
@@ -37,21 +37,21 @@
 - [x] **T-008** 实现确定性根因归因 —— ✅ 证据：[`invoice_eval/evaluator.py`](../../invoice_eval/evaluator.py)、[`tests/test_evaluator.py`](../../tests/test_evaluator.py)
 - [x] **T-020** 实现评分与 A/B 输出 —— ✅ 证据：[`invoice_eval/scoring.py`](../../invoice_eval/scoring.py)、[`invoice_eval/cli.py`](../../invoice_eval/cli.py)、[`tests/test_evaluator.py`](../../tests/test_evaluator.py)
 
-## 阶段 B2 · 确定性规则扩展（未开始）
+## 阶段 B2 · 确定性规则扩展 —— ✅ 已完成 2026-11-04
 
-- [ ] **T-006** 实现重复/取消/超时校验
-- [ ] **T-007** 实现批量/红票校验
+- [x] **T-006** 实现重复/取消/超时校验 —— ✅ 证据：[`invoice_eval/risk_controls.py`](../../invoice_eval/risk_controls.py)、[`tests/test_risk_controls.py`](../../tests/test_risk_controls.py)
+- [x] **T-007** 实现批量/红票校验 —— ✅ 证据：[`invoice_eval/invoice_types.py`](../../invoice_eval/invoice_types.py)、[`tests/test_invoice_types.py`](../../tests/test_invoice_types.py)
 
-## 阶段 C · 模型增强与批量验证（未开始）
+## 阶段 C · 模型增强与批量验证（验证完成，模型未接入）
 
 - [ ] **T-009** 接入模型层（复杂解释）；确定性版本必须先通过训练集回归
-- [ ] **T-010** 用训练集回归，对比参考标注
-- [ ] **T-011** 跑验证集，过格式校验
+- [x] **T-010** 用训练集回归，对比参考标注 —— ✅ 证据：[`tests/test_training_regression.py`](../../tests/test_training_regression.py)（14 Case / 28 run 的布尔、根因、首错、证据和方向全部一致）
+- [x] **T-011** 跑验证集，过格式校验 —— ✅ 证据：[`tests/test_validation_regression.py`](../../tests/test_validation_regression.py)（8 Case / 16 run，场景方向一致且通过官方校验）
 
-## 阶段 D · 交付（未开始）
+## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 
-- [ ] **T-012** 写方法说明
-- [ ] **T-013** 写版本评估报告
+- [x] **T-012** 写方法说明 —— ✅ 证据：[`50-deliverables/method.md`](../50-deliverables/method.md)
+- [x] **T-013** 写版本评估报告 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)
 
 ## 后续候选（未排期，不影响当前 MVP）
 

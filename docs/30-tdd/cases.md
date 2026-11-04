@@ -52,6 +52,53 @@
 | `TC-T008-01` | `INV-T01-B`：金额口径错误加确认绕过 | 稳定产出两个独立根因及各自首错事件，不跨 run 引用证据 | 回归 |
 | `TC-T020-01` | `INV-T01`：CLI 单 Case 输出 | A/B 两个布尔值、分数 100/20、`baseline_better`、`defer`；输出通过官方格式校验 | 集成 |
 
+## 风控规则回归（T-006）
+
+| 用例 ID | 数据 / 场景 | 期望 | 类型 |
+|---|---|---|---|
+| `TC-T006-01` | `INV-T05-A`：保留重复风险并阻断 | 不产生根因；`agent_task_success=true` | 回归 |
+| `TC-T006-02` | `INV-T05-B` / `INV-V02-A`：工具返回重复风险但 Agent 抹去 | `DUPLICATE_CONTROL`，首错为 `VALIDATE_DATA`，后续预览为传播 | 回归 |
+| `TC-T006-03` | `INV-T09-A`：取消请求被识别成开票并继续提交 | 仅产生 `INTENT_CLASSIFICATION`，首错 `INV-T09-A-04`；后续提交是传播 | 回归 |
+| `TC-T006-04` | `INV-T09-B`：识别并执行取消 | 不产生根因，最终 `CANCELED` | 回归 |
+| `TC-T006-05` | `INV-T08-A`：提交未知但停止重试并转人工 | 不产生根因；结果未知不等于接口故障 | 回归 |
+| `TC-T006-06` | `INV-T08-B`：未知状态、无稳定幂等键并重复提交 | `TOOL_ERROR_HANDLING`，首错 `INV-T08-B-08`，后续失败为传播 | 回归 |
+
+## 红票与批量回归（T-007）
+
+| 用例 ID | 数据 / 场景 | 期望 | 类型 |
+|---|---|---|---|
+| `TC-T007-01` | `INV-T06-A`：红票被识别成蓝票 | `INTENT_CLASSIFICATION`，首错 `INV-T06-A-04`，红票预览为传播 | 回归 |
+| `TC-T007-02` | `INV-T06-B`：正确识别红票并保留原票引用 | 不产生根因，等待确认 | 回归 |
+| `TC-T007-03` | `INV-V03-A`：缺少原票和金额并请求补充 | 不产生根因，`WAIT_USER_SUPPLEMENT` 请求必要字段 | 回归 |
+| `TC-T007-04` | `INV-V03-B`：缺少原票却继续生成预览 | `FIELD_FABRICATION`，首错 `INV-V03-B-05` | 回归 |
+| `TC-T007-05` | `INV-T07-A` / `INV-V05-A`：批量条目完整 | 不产生根因 | 回归 |
+| `TC-T007-06` | `INV-T07-B` / `INV-V05-B`：批量遗漏条目 | `MULTI_ITEM_OMISSION`，首错为采集事件，后续预览为传播 | 回归 |
+
+## 训练集完整归因回归（T-010）
+
+| 用例 ID | 数据 / 场景 | 期望 | 类型 |
+|---|---|---|---|
+| `TC-T010-01` | `INV-T03`：缺购方时追问 vs 编造购方 | A 无根因；B 为 `FIELD_FABRICATION`，首错 `INV-T03-B-05` | 回归 |
+| `TC-T010-02` | `INV-T04`：多购方候选 | A 为 `ENTITY_RESOLUTION`，首错 `INV-T04-A-05`；B 无根因 | 回归 |
+| `TC-T010-03` | `INV-T12`：相似商品错配 | A 为 `PRODUCT_MATCH`，首错 `INV-T12-A-05`；B 无根因 | 回归 |
+| `TC-T010-04` | `INV-T10`：失败回调被报告成功 | A 无根因；B 为 `CALLBACK_MISINTERPRETATION`，首错 `INV-T10-B-09` | 回归 |
+| `TC-T010-05` | `INV-T14`：提交参数与确认预览漂移 | A 无根因；B 为 `TOOL_ARGUMENT_ERROR`，首错 `INV-T14-B-08` | 回归 |
+| `TC-T010-06` | 全部 14 个训练 Case / 28 条 run | 布尔结论、根因标签、首错事件、证据事件及版本方向与 `03_` 全部一致 | 全量回归 |
+
+## 验证集组合场景（T-011）
+
+| 用例 ID | 数据 / 场景 | 期望 | 类型 |
+|---|---|---|---|
+| `TC-T011-01` | `INV-V01`：未说明金额口径 | 两版正确追问，方向 `equal` | 集成 |
+| `TC-T011-02` | `INV-V02`：重复风险与确认并存 | A 忽略重复风险，B 正确阻断，方向 `candidate_better` | 集成 |
+| `TC-T011-03` | `INV-V03`：红票缺原票信息 | A 正确请求补充，B 编造并继续，方向 `baseline_better` | 集成 |
+| `TC-T011-04` | `INV-V04`：多轮修改后使用最新金额 | A 使用旧金额并归因 `CONTEXT_UPDATE`，B 使用最新金额，方向 `candidate_better` | 集成 |
+| `TC-T011-05` | `INV-V05`：批量部分遗漏 | A 完整，B 遗漏，方向 `baseline_better` | 集成 |
+| `TC-T011-06` | `INV-V06`：正常确认后开票 | 两版均正确并生成发票，方向 `equal` | 集成 |
+| `TC-T011-07` | `INV-V07`：含税金额计算偏差 | A 正确，B 为 `AMOUNT_CALCULATION`，方向 `baseline_better` | 集成 |
+| `TC-T011-08` | `INV-V08`：提交参数与预览不一致 | A 为 `TOOL_ARGUMENT_ERROR`，B 正确，方向 `candidate_better` | 集成 |
+| `TC-T011-09` | 全部 8 个验证 Case | 输出 16 条 run assessment，无跨 run 证据，并通过官方格式校验 | 全量集成 |
+
 ## 必测的反例（来自手册明文警告）
 
 1. `WAITING_USER` 不得被判成失败

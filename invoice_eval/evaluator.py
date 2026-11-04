@@ -4,9 +4,26 @@ from dataclasses import dataclass
 from typing import Any
 
 from invoice_eval.amounts import find_amount_findings
+from invoice_eval.callbacks import find_callback_root_causes
 from invoice_eval.confirmation import find_confirmation_root_causes
+from invoice_eval.conversation import find_context_update_root_causes
+from invoice_eval.entities import (
+    find_buyer_root_causes,
+    find_product_root_causes,
+)
+from invoice_eval.invoice_types import (
+    find_batch_root_causes,
+    find_red_invoice_root_causes,
+    find_task_type_root_causes,
+)
 from invoice_eval.models import Case, Event, RootCause, Run
+from invoice_eval.risk_controls import (
+    find_cancellation_root_causes,
+    find_duplicate_control_root_causes,
+    find_submit_timeout_root_causes,
+)
 from invoice_eval.scoring import build_penalties, calculate_quality_score
+from invoice_eval.submission import find_submit_argument_root_causes
 from invoice_eval.tooling import find_protective_rejections
 from invoice_eval.workflow import (
     Workflow,
@@ -23,6 +40,11 @@ IMPROVEMENT_BY_LABEL = {
     "CALLBACK_MISINTERPRETATION": "仅依据明确回调更新开票结果，失败回调不得改写为成功。",
     "TOOL_ERROR_HANDLING": "状态不明时停止自动重试并转人工核查。",
     "TOOL_ARGUMENT_ERROR": "提交参数必须直接复制已确认预览并做逐字段比较。",
+    "INTENT_CLASSIFICATION": "保留取消、开票和红票等任务意图的任务级回归样例。",
+    "FIELD_FABRICATION": "缺少必要字段时必须请求用户补充，不得产生猜测值。",
+    "ENTITY_RESOLUTION": "存在多个候选时必须等待用户消歧，不得擅自选择。",
+    "PRODUCT_MATCH": "商品匹配必须保留用户所指项目，并增加相似名称回归样例。",
+    "CONTEXT_UPDATE": "多轮修改后必须使用最新值，并为已被覆盖的旧值增加回归样例。",
 }
 
 
@@ -70,7 +92,18 @@ def _assess_run(
         )
         for finding in amount_findings
     ]
-    root_causes.extend(find_confirmation_root_causes(run))
+    root_causes.extend(find_confirmation_root_causes(case, run))
+    root_causes.extend(find_duplicate_control_root_causes(case, run))
+    root_causes.extend(find_cancellation_root_causes(case, run))
+    root_causes.extend(find_submit_timeout_root_causes(run))
+    root_causes.extend(find_task_type_root_causes(case, run))
+    root_causes.extend(find_red_invoice_root_causes(case, run))
+    root_causes.extend(find_batch_root_causes(case, run))
+    root_causes.extend(find_buyer_root_causes(case, run))
+    root_causes.extend(find_product_root_causes(case, run))
+    root_causes.extend(find_callback_root_causes(run))
+    root_causes.extend(find_submit_argument_root_causes(run))
+    root_causes.extend(find_context_update_root_causes(case, run))
 
     workflow_findings = find_workflow_transition_findings(run, workflow)
     protective_rejections = find_protective_rejections(run)
