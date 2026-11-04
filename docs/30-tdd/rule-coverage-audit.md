@@ -81,3 +81,30 @@ for r in rules:
     print(r, [k for k in base if base[k] != after[k]])
 PY
 ```
+
+## 七、人工复核 INV-V03 / INV-V04（2026-11-04）
+
+这两条规则**只在无标签验证集触发**，没有标签可对照，故逐事件人工核对。
+
+### 核对结果
+
+| Case / run | 轨迹事实 | 评测器判定 | 复核结论 |
+|---|---|---|---|
+| `INV-V04-A` | COLLECT 金额 **2000**（第一轮旧值），参考最新值 **2500** | `CONTEXT_UPDATE`，首因 `-05`，score 70 | **判对** |
+| `INV-V04-B` | COLLECT 金额 **2500** | success=true，score 100 | **判对** |
+| `INV-V03-A` | 金额与原票均未提供，Agent 停在 `WAIT_USER_SUPPLEMENT` 明确索要两项 | success=true | **判对**（符合 `required_action=ASK_ORIGINAL_INVOICE_AND_AMOUNT`） |
+| `INV-V03-B` | **用户从未提供金额**（参考值为 null），Agent 在 COLLECT 填入 **100000**，且未索要原票即进入确认预览 | `FIELD_FABRICATION`（解释只提"原票编号缺失"），score 70 | **方向对但漏判**：只抓了"缺原票"，没抓"**编造金额**" |
+
+### 漏报根因
+
+`find_amount_findings`（`amounts.py:70-77`）：参考 `amount_value` 为 `null` 时**直接返回空**，因此「题内未给金额、Agent 自行编一个」这一形态**没有任何规则覆盖**。而官方手册 L37-38 明确：「缺少购方、金额口径、原票引用等必要信息时，正确动作是追问，不能猜测」。⇒ 这是**判据覆盖缺口**，不是口径分歧。
+
+### 影响面（修复前必须先确认）
+
+若补上该规则（建议 `FIELD_FABRICATION`，按 method.md「严重」扣 50）：
+
+- `INV-V03-B` 分数 70 → **20**；验证集候选版平均质量分 88.75 → **82.5**；
+- 版本报告 §3 的「平均质量分 B 高于 A（+2.50）」将**反转**为低于 A，§4/§6 相关叙述需同步重算；
+- 单 Case 方向（`V03=V03-B 更差`）不变，`version_comparison.direction` 不变。
+
+⇒ 修复会改动**已定稿版本报告的核心指标**，须项目双人（李经霖 / 王怡然）确认后执行，并重新生成报告数字。
