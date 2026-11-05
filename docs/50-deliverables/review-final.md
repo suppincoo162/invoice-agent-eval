@@ -1,39 +1,55 @@
-# 交付前终审报告（2026-11-04）
+# 交付前终审报告（2026-11-05）
 
-> 状态：**一次性复审的结论留痕**。复审对象＝`main`（`dce9a6b`）；复审方式＝只读复跑 ＋ 官方校验器 ＋ 文档一致性核对。
-> 结论：**可以交付**。硬验收全部通过；未完成项均为"可选增强"或"打包口径"，不阻塞提交。
+> 结论：**可以交付**。确定性评测链路、训练/验证回归、官方格式校验和交付文档均已具备；LLM 与完整反事实引擎按 ADR 决定不进入本版。
 
-## 一、硬验收（每条都是复跑得到的，不是转述）
+## 一、硬验收
 
-| 检查项 | 命令 | 结果 |
-|---|---|---|
-| 单元测试 | `python -m pytest -q` | **68 passed ＋ 27 subtests**（1.0 s 内） |
-| CLI 实跑（验证集） | `python -m invoice_eval evaluate --cases 04_无标注验证轨迹.jsonl --output …` | exit 0，输出 **8 行** |
-| CLI 实跑（训练集） | 同上，换 `02_公开训练轨迹.jsonl` | exit 0，输出 **14 行** |
-| **官方格式校验** | `python docs/00-brief/data/08_提交格式校验.py --cases … --submission …` | 验证集「通过，8 个 Case、16 个 run」；训练集「通过，14 个 Case、28 个 run」；两次 exit 0 |
-| 依赖面 | 静态扫描 `invoice_eval/*.py` 的 import | **零第三方依赖**（仅标准库：argparse/json/pathlib/dataclasses/decimal/typing/collections） |
+| 检查项 | 结果 |
+|---|---|
+| 单元、回归与集成测试 | **75 项通过** |
+| 训练集 CLI | 14 个 Case 输出成功 |
+| 验证集 CLI | 8 个 Case 输出成功 |
+| 训练集官方格式校验 | 14 Case / 28 run 通过 |
+| 验证集官方格式校验 | 8 Case / 16 run 通过 |
+| 第三方运行依赖 | 无；仅 Python 3.10+ 标准库 |
+| 训练参考归因 | 28 条 run 的布尔值、根因、首错、证据和方向全部一致 |
 
-## 二、结构一致性
+## 二、最终版本指标
 
-- `docs/` 六层齐：`00-brief → 10-spec → 20-design → 30-tdd → 40-plan → 50-deliverables`；ADR 机制在用（ADR-001/002/004 已记，ADR-003 本次补记）。
-- `docs/40-plan/tasks.md` 每条任务带**证据指针**（文件/测试/行号），可逐条回核——本次复审正是靠它把验收面穷举出来的。
-- 交付文档齐：`50-deliverables/method.md`（方法）＋ `version-report.md`（版本报告，明确标注"程序预测 ≠ 专家标签"、结论 `investigate`）。
+验证集共有 8 个 A/B 成对 Case，以下均为程序预测，不是专家标签：
 
-## 三、二轮复审补的两处（2026-11-04 当天闭环）
+| 指标 | 基线 A | 候选 B |
+|---|---:|---:|
+| `agent_task_success=true` | 5/8 | 4/8 |
+| `business_invoice_created=true` | 3/8 | 3/8 |
+| 平均 `quality_score` | 86.25 | 82.50 |
+| 高风险预测数（分数 ≤ 50） | 1 | 1 |
 
-1. **题内目标缺失不再默认成功**：`reference_result` 缺 `invoice_should_exist` / `acceptable_snapshot_state` 时，旧逻辑让匹配条件恒为 `True`（可能把"不知道目标"判成成功）。已改为**降级 `INSUFFICIENT_EVIDENCE` 且不可评分**，并补正控/负控各一条。回归证据：改动前后 22 个公开 Case 输出**逐字节一致**。
-4. **口径自拟漏判已修**：`INV-V01-B` 在题内未给含税/不含税口径时自行假定后推进，此前判成功（方向误判 `equal`）；现归因 `AMOUNT_BASIS`、判失败，`INV-V01` 方向改为 `baseline_better`。同时合并同一首因的重复根因。详见 [`30-tdd/rule-coverage-audit.md`](../30-tdd/rule-coverage-audit.md) §八。
-3. **编造金额漏判已修**：`INV-V03-B` 在题内未给金额时填入 100000，此前无任何规则命中；现按官方标签 `FIELD_FABRICATION`（严重度 50）计入，分数 70→50，候选版均分与基线持平。详见 [`30-tdd/rule-coverage-audit.md`](../30-tdd/rule-coverage-audit.md) §七。
-2. **依赖说明补齐**：README 新增「运行与环境（依赖说明）」——Python ≥3.10、**无第三方依赖**、运行与自测命令；同时补 CI（push/PR 自动 `pytest`）与「交付件核对清单」（`40-plan/tasks.md` 阶段 D）。
+版本方向：
 
-## 四、仍未完成项（均不阻塞交付）
+```text
+baseline_better：4
+candidate_better：3
+equal：1
+insufficient_evidence：0
+```
 
-1. **T-009 接入模型层** 未做；对应 **ADR-003 已定稿：本版不接入**（理由见 ADR-003）。
-2. **`QUALITY` 口径提醒**：`quality_score=0` 既表"极差"也当"不可评分哨兵"，若官方按均值排名会拉低——已在 `method.md` 标明，提交时知悉即可。
-3. 开发分支 `ljl/dev`、`wyr/dev` 按 `docs/git-workflow.md` 是常驻分支（合并后不删），非缺陷。
+最终建议：`investigate`。候选版在重复风险、多轮更新和提交参数上提升，但在口径自拟、金额编造、批量遗漏和金额计算上退化。
 
-## 四、证据边界（这份报告不能证明什么）
+## 三、本轮审查闭环
 
-- 验证集**没有专家标签** ⇒ 报告里的"预测正确率"是程序口径，不是真值。
-- 训练集规模 14 Case / 28 run，规则覆盖密度见 [`30-tdd/rule-coverage-audit.md`](../30-tdd/rule-coverage-audit.md)：**平均不足 1 个 Case/规则**，隐藏集新形态仍是主要风险。
-- 本复审**未**评价判据的业务正确性（那需要领域专家逐条确认），只评价"实现与验收链路是否成立"。
+1. **题内目标缺失**：不再把缺少 `invoice_should_exist` / `acceptable_snapshot_state` 当作默认匹配，降级为 `INSUFFICIENT_EVIDENCE`。
+2. **金额编造**：题内未提供金额而 Agent 填入数值时，归因 `FIELD_FABRICATION`。
+3. **口径自拟**：题内未提供含税/不含税口径时，只有明确请求 `amount_basis` 才算追问；其他字段补充请求不能替代。
+4. **重复归因**：同一 `(label, first_fault_event_id)` 合并解释与证据，只扣一次。
+5. **流程边界**：新增缺必经中间步和合法截短前缀测试。
+6. **依赖说明与 CI**：README 补齐运行环境；GitHub Actions 执行测试。
+7. **ADR-003**：本版不接入 LLM。
+8. **ADR-004**：已发现真实归因缺口，但只采用定性依赖链，不实现完整反事实引擎。
+
+## 四、证据边界
+
+- 验证集没有专家逐 run 标签；“正确率”、质量分和版本方向都是评测器预测。
+- 训练集规则密度较低，隐藏集新组合仍可能超出当前规则。
+- 流程白名单可能遇到新的合法停步形态，需持续保留实测例外与回归。
+- 本报告验证的是实现、证据链和格式闭环，不代替领域专家对判据本身的确认。

@@ -1,6 +1,6 @@
 # 方法说明（比赛交付物）
 
-> 版本：deterministic-v0.2.0（2026-11-04）
+> 版本：deterministic-v0.2.1（2026-11-05）
 > 唯一规则真源：[`10-spec/spec.md`](../10-spec/spec.md)
 > 实现入口：[`invoice_eval/`](../../invoice_eval/)；数据包版本：`student-1.0`
 

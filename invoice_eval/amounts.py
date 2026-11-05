@@ -108,8 +108,13 @@ def find_amount_findings(case: Case, run: Run) -> tuple[AmountFinding, ...]:
     # 选定口径并推进 ⇒ 猜测口径。官方规则：语义不明必须追问。
     if not isinstance(expected_basis, str):
         observed_basis = observed.get("amount_basis")
-        asked = _first_event(run, "WAIT_USER_SUPPLEMENT")
-        if isinstance(observed_basis, str) and asked is None:
+        asked_basis = _requested_field_after(
+            run,
+            collection,
+            "amount_basis",
+            "WAIT_USER_SUPPLEMENT",
+        )
+        if isinstance(observed_basis, str) and not asked_basis:
             propagation = _first_event(
                 run, "CONFIRM_INVOICE"
             ) or _first_event(run, "SUBMIT_INVOICE")
@@ -267,6 +272,22 @@ def _first_event(run: Run, step_id: str) -> Event | None:
         (event for event in run.events if event.step_id == step_id),
         None,
     )
+
+
+def _requested_field_after(
+    run: Run,
+    event: Event,
+    field: str,
+    step_id: str,
+) -> bool:
+    for candidate in run.events:
+        if candidate.seq <= event.seq or candidate.step_id != step_id:
+            continue
+        output = _as_object(candidate.raw.get("observed_output")) or {}
+        requested = output.get("requested_fields")
+        if isinstance(requested, list) and field in requested:
+            return True
+    return False
 
 
 def _as_object(
