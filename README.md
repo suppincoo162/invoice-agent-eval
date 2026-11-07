@@ -58,14 +58,48 @@
 - **自测**：`python -m pytest -q`（未装 pytest 时用 `python -m unittest discover -s tests -q`）。
 - **官方格式校验**：`python docs/00-brief/data/08_提交格式校验.py --cases <cases> --submission <out>`。
 
-## 当前状态（**as of 2026-11-04** · 快照，非实时）
+### 可选 LLM 独立盲审
+
+正式评测命令始终使用确定性规则。另有一个独立的 `audit` 命令，可调用
+OpenAI-compatible API 或本地 Ollama 对 Case 做盲审，输出单独的
+`llm-review.jsonl`，不会修改正式 submission。
+
+```bash
+cp .env.example .env
+# 编辑 .env 后由当前 shell 读取；不要把 .env 提交到 Git
+set -a
+source .env
+set +a
+
+python -m invoice_eval audit \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --output outputs/llm-review.jsonl \
+  --case-id INV-V03 \
+  --cache-dir outputs/llm-cache
+
+python -m invoice_eval compare-audit \
+  --submission outputs/validation-v021.jsonl \
+  --llm-review outputs/llm-review.jsonl \
+  --output outputs/audit-comparison.jsonl \
+  --case-id INV-V03
+```
+
+云端 API 与 Ollama 使用同一接口，只需切换 `BASE_URL` 和 `MODEL`。
+API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，也不会写入
+审计结果或缓存。
+
+已用本地 `deepseek-r1:8b` 和云端 `deepseek-flash` 完成 `INV-V03` 对照。
+两个模型与确定性评测在版本方向、两个布尔值、根因和首错上一致，但证据范围
+不同；比较结果单独输出，正式 submission 不受影响。
+
+## 当前状态（**as of 2026-11-07** · 快照，非实时）
 
 > 实时进度只在一处维护：[`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)。以下是带日期的快照，方便"刚拿到仓库的人/Agent"一眼判断该不该往下干。
 
 | 项 | 状态 |
 |---|---|
-| **所处阶段** | **确定性评测、训练/验证回归和交付文档已完成；进入最终审查与打包** |
-| 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) |
-| 未完成 | LLM 可选增强 · 提交前审查与最终打包 |
-| **下一步** | 审查交付物并决定是否启用可选模型增强，见 [`docs/40-plan/tasks.md`](docs/40-plan/tasks.md) |
+| **所处阶段** | **确定性评测、训练/验证回归、交付文档和 LLM 独立盲审试点已完成；进入决赛打磨** |
+| 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) · 可选 OpenAI-compatible/Ollama 盲审 |
+| 未完成 | 云端 API 实跑 · 决赛演示材料 · 最终发布包 |
+| **下一步** | 配置云端 API 并完成三方对照，见 [`docs/40-plan/tasks.md`](docs/40-plan/tasks.md) |
 | 谁能动 | 任何人都可以读；**改 `main` 一律走 MR**（见 [`docs/git-workflow.md`](docs/git-workflow.md)）；`docs/00-brief/data/` 是组委会资料，**只读** |

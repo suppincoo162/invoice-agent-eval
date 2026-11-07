@@ -42,9 +42,9 @@
 - [x] **T-006** 实现重复/取消/超时校验 —— ✅ 证据：[`invoice_eval/risk_controls.py`](../../invoice_eval/risk_controls.py)、[`tests/test_risk_controls.py`](../../tests/test_risk_controls.py)
 - [x] **T-007** 实现批量/红票校验 —— ✅ 证据：[`invoice_eval/invoice_types.py`](../../invoice_eval/invoice_types.py)、[`tests/test_invoice_types.py`](../../tests/test_invoice_types.py)
 
-## 阶段 C · 模型增强与批量验证（验证完成，模型未接入）
+## 阶段 C · 模型增强与批量验证（模型盲审试点完成，正式主链路仍不接入）
 
-- [ ] **T-009** 接入模型层（复杂解释）；确定性版本必须先通过训练集回归 —— ⏸ **2026-11-04 终审定：本版不接入**（[ADR-003](../20-design/decisions.md)；重评估触发见该条）
+- [x] **T-009** 实现可选 LLM 独立盲审试点 —— ✅ 证据：[`invoice_eval/llm_audit.py`](../../invoice_eval/llm_audit.py)、[`invoice_eval/audit_compare.py`](../../invoice_eval/audit_compare.py)、[`tests/test_llm_audit.py`](../../tests/test_llm_audit.py)、ADR-003；本地 `deepseek-r1:8b` 与云端 `deepseek-flash` 均完成 `INV-V03`
 - [x] **T-010** 用训练集回归，对比参考标注 —— ✅ 证据：[`tests/test_training_regression.py`](../../tests/test_training_regression.py)（14 Case / 28 run 的布尔、根因、首错、证据和方向全部一致）
 - [x] **T-011** 跑验证集，过格式校验 —— ✅ 证据：[`tests/test_validation_regression.py`](../../tests/test_validation_regression.py)（8 Case / 16 run，场景方向一致且通过官方校验）
 
