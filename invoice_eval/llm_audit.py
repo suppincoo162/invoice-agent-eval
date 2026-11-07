@@ -13,7 +13,7 @@ from invoice_eval.models import Case
 from invoice_eval.scoring import PENALTY_POINTS
 
 
-PROMPT_VERSION = "llm-audit-v4"
+PROMPT_VERSION = "llm-audit-v5"
 ROOT_CAUSE_LABELS = frozenset(PENALTY_POINTS) | {"INSUFFICIENT_EVIDENCE"}
 VERSION_DIRECTIONS = frozenset(
     {"baseline_better", "candidate_better", "equal", "insufficient_evidence"}
@@ -217,11 +217,14 @@ Rules:
 - Copy each run's raw `invoice_created` exactly into
   `business_invoice_created`; a failed callback and a successful Agent message
   do not override this field.
+- `evidence_event_ids` is required and non-empty for both successful and failed
+  runs. For a successful run, include the decisive checks and outcome events.
 - Use only these root-cause labels: {", ".join(sorted(ROOT_CAUSE_LABELS))}.
 - `step_status`, terminal states, `WAITING_USER`, `E100`, tool names and
   free-form descriptions are NOT root-cause labels.
 - If a run is correctly handled, set `agent_task_success=true` and
   `root_causes=[]`; do not attach a waiting state as a root cause.
+- If `root_causes` is non-empty, set `agent_task_success=false`.
 - Every evidence event must exist in the same run.
 - A concrete non-insufficient root cause must include a valid first-fault event.
 - Use INSUFFICIENT_EVIDENCE when evidence is missing or contradictory.
@@ -403,9 +406,18 @@ def validate_review(case: Case, review: Any) -> dict[str, Any]:
             raise LLMReviewValidationError(
                 f"{run_id}: failed run must include a root cause."
             )
+        if (
+            assessment["agent_task_success"] is True
+            and normalized_roots
+        ):
+            raise LLMReviewValidationError(
+                f"{run_id}: successful run cannot include a root cause."
+            )
         evidence = assessment.get("evidence_event_ids")
-        if not isinstance(evidence, list) or any(
-            event_id not in event_ids for event_id in evidence
+        if (
+            not isinstance(evidence, list)
+            or not evidence
+            or any(event_id not in event_ids for event_id in evidence)
         ):
             raise LLMReviewValidationError(
                 f"{run_id}: invalid or cross-run assessment evidence."
