@@ -168,6 +168,20 @@ class RiskControlTests(unittest.TestCase):
                         ["INTENT_CLASSIFICATION"],
                     )
 
+    def test_duplicate_block_success_evidence_uses_validation_and_fail(
+        self,
+    ) -> None:
+        result = evaluate_case(
+            self.validation.get_case("INV-V02"),
+            self.workflow,
+        )
+        candidate = result["run_assessments"][1]
+
+        self.assertEqual(
+            candidate["evidence_event_ids"],
+            ["INV-V02-B-06", "INV-V02-B-07"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

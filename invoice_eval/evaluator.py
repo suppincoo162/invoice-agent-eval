@@ -404,27 +404,26 @@ def _evidence_ids(
 
 
 def _key_success_evidence(run: Run) -> tuple[str, ...]:
-    priorities = (
-        "COLLECT_INVOICE_DATA",
-        "CONFIRM_INVOICE",
-        "WAIT_INVOICE_CALLBACK",
-        "COMPLETE_TASK",
-        "FAIL_TASK",
-        "CANCEL_TASK",
-        "TRANSFER_TO_HUMAN",
-    )
-    selected: list[Event] = []
-    for step_id in priorities:
-        event = next(
-            (event for event in run.events if event.step_id == step_id),
+    if not run.events:
+        return ()
+
+    final_state = run.raw.get("final_state")
+    if final_state == "WAITING_USER":
+        collection = next(
+            (
+                event
+                for event in run.events
+                if event.step_id == "COLLECT_INVOICE_DATA"
+            ),
             None,
         )
-        if event is not None:
-            selected.append(event)
-        if len(selected) == 2:
-            break
-    if not selected and run.events:
-        selected.append(run.events[-1])
+        selected = (
+            [collection, run.events[-1]]
+            if collection is not None and collection is not run.events[-1]
+            else [run.events[-1]]
+        )
+    else:
+        selected = list(run.events[-2:])
     return tuple(event.event_id for event in selected)
 
 

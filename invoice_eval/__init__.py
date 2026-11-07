@@ -3,6 +3,7 @@ from invoice_eval.amounts import (
     calculate_amounts,
     find_amount_findings,
 )
+from invoice_eval.audit_compare import compare_audits
 from invoice_eval.callbacks import find_callback_root_causes
 from invoice_eval.confirmation import find_confirmation_root_causes
 from invoice_eval.conversation import find_context_update_root_causes
@@ -16,6 +17,15 @@ from invoice_eval.invoice_types import (
     find_batch_root_causes,
     find_red_invoice_root_causes,
     find_task_type_root_causes,
+)
+from invoice_eval.llm_audit import (
+    LLMConfig,
+    LLMConfigError,
+    LLMRequestError,
+    LLMReviewValidationError,
+    OpenAICompatibleClient,
+    audit_case,
+    validate_review,
 )
 from invoice_eval.models import (
     Case,
@@ -51,6 +61,11 @@ __all__ = [
     "Dataset",
     "DatasetFormatError",
     "Event",
+    "LLMConfig",
+    "LLMConfigError",
+    "LLMRequestError",
+    "LLMReviewValidationError",
+    "OpenAICompatibleClient",
     "PenaltyItem",
     "ProtectiveRejection",
     "RootCause",
@@ -60,7 +75,9 @@ __all__ = [
     "WorkflowFormatError",
     "calculate_amounts",
     "calculate_quality_score",
+    "compare_audits",
     "build_penalties",
+    "audit_case",
     "evaluate_case",
     "find_amount_findings",
     "find_batch_root_causes",
@@ -79,4 +96,5 @@ __all__ = [
     "find_workflow_transition_findings",
     "load_dataset",
     "load_workflow",
+    "validate_review",
 ]
