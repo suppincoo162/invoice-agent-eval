@@ -397,7 +397,9 @@ def _evidence_ids(
         for finding in workflow_findings
         for event_id in finding.evidence_event_ids
     )
-    if not evidence and not root_causes:
+    if evidence:
+        evidence.update(_key_outcome_evidence(run))
+    else:
         evidence.update(_key_success_evidence(run))
     order = {event.event_id: event.seq for event in run.events}
     return tuple(sorted(evidence, key=lambda event_id: order[event_id]))
@@ -409,22 +411,56 @@ def _key_success_evidence(run: Run) -> tuple[str, ...]:
 
     final_state = run.raw.get("final_state")
     if final_state == "WAITING_USER":
-        collection = next(
+        selected = _first_events(
+            run,
             (
-                event
-                for event in run.events
-                if event.step_id == "COLLECT_INVOICE_DATA"
+                "COLLECT_INVOICE_DATA",
+                "VALIDATE_DATA",
+                "CONFIRM_INVOICE",
+                "WAIT_USER_SUPPLEMENT",
+            ),
+        )
+        selected.append(run.events[-1])
+    elif run.raw.get("invoice_created") is True:
+        selected = _first_events(
+            run,
+            (
+                "COLLECT_INVOICE_DATA",
+                "VALIDATE_DATA",
+                "CONFIRM_INVOICE",
+                "SUBMIT_INVOICE",
+                "WAIT_INVOICE_CALLBACK",
+            ),
+        )
+        selected.append(run.events[-1])
+    else:
+        selected = list(run.events[-2:])
+    return tuple(dict.fromkeys(event.event_id for event in selected))
+
+
+def _key_outcome_evidence(run: Run) -> tuple[str, ...]:
+    selected = _first_events(run, ("WAIT_INVOICE_CALLBACK",))
+    if run.events:
+        selected.append(run.events[-1])
+    return tuple(dict.fromkeys(event.event_id for event in selected))
+
+
+def _first_events(
+    run: Run, step_ids: tuple[str, ...]
+) -> list[Event]:
+    selected: list[Event] = []
+    for step_id in step_ids:
+        event = next(
+            (
+                candidate
+                for candidate in run.events
+                if candidate.step_id == step_id
             ),
             None,
         )
-        selected = (
-            [collection, run.events[-1]]
-            if collection is not None and collection is not run.events[-1]
-            else [run.events[-1]]
-        )
-    else:
-        selected = list(run.events[-2:])
-    return tuple(event.event_id for event in selected)
+        if event is not None:
+            selected.append(event)
+    return selected
 
 
 def _workflow_evidence(

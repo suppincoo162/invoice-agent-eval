@@ -88,6 +88,69 @@ class ValidationRegressionTests(unittest.TestCase):
             or any("未请求" in root["explanation"] for root in candidate["root_causes"])
         )
 
+    def test_successful_run_evidence_covers_checks_and_outcome(self) -> None:
+        expectations = {
+            ("INV-V07", 0): [
+                "INV-V07-A-05",
+                "INV-V07-A-06",
+                "INV-V07-A-07",
+                "INV-V07-A-08",
+                "INV-V07-A-09",
+                "INV-V07-A-10",
+            ],
+            ("INV-V08", 1): [
+                "INV-V08-B-05",
+                "INV-V08-B-06",
+                "INV-V08-B-07",
+                "INV-V08-B-08",
+                "INV-V08-B-09",
+                "INV-V08-B-10",
+            ],
+        }
+        for (case_id, run_index), expected in expectations.items():
+            with self.subTest(case_id=case_id):
+                run = evaluate_case(
+                    self.dataset.get_case(case_id),
+                    self.workflow,
+                )["run_assessments"][run_index]
+                self.assertEqual(run["evidence_event_ids"], expected)
+
+    def test_failed_run_evidence_adds_final_outcome(self) -> None:
+        expectations = {
+            ("INV-V07", 1): {
+                "root": ["INV-V07-B-05", "INV-V07-B-08"],
+                "run": [
+                    "INV-V07-B-05",
+                    "INV-V07-B-08",
+                    "INV-V07-B-09",
+                    "INV-V07-B-10",
+                ],
+            },
+            ("INV-V08", 0): {
+                "root": ["INV-V08-A-07", "INV-V08-A-08"],
+                "run": [
+                    "INV-V08-A-07",
+                    "INV-V08-A-08",
+                    "INV-V08-A-09",
+                    "INV-V08-A-10",
+                ],
+            },
+        }
+        for (case_id, run_index), expected in expectations.items():
+            with self.subTest(case_id=case_id):
+                run = evaluate_case(
+                    self.dataset.get_case(case_id),
+                    self.workflow,
+                )["run_assessments"][run_index]
+                self.assertEqual(
+                    run["root_causes"][0]["evidence_event_ids"],
+                    expected["root"],
+                )
+                self.assertEqual(
+                    run["evidence_event_ids"],
+                    expected["run"],
+                )
+
     def test_validation_output_passes_official_validator(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "validation.jsonl"

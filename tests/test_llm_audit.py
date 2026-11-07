@@ -159,6 +159,26 @@ class LLMAuditTests(unittest.TestCase):
         ):
             validate_review(self.case, response)
 
+    def test_rejects_missing_success_assessment_evidence(self) -> None:
+        response = _valid_review()
+        response["run_assessments"][0]["evidence_event_ids"] = []
+
+        with self.assertRaisesRegex(
+            LLMReviewValidationError,
+            "assessment evidence",
+        ):
+            validate_review(self.case, response)
+
+    def test_rejects_successful_run_with_root_cause(self) -> None:
+        response = _valid_review()
+        response["run_assessments"][1]["agent_task_success"] = True
+
+        with self.assertRaisesRegex(
+            LLMReviewValidationError,
+            "successful run cannot include",
+        ):
+            validate_review(self.case, response)
+
     def test_rejects_unknown_root_label(self) -> None:
         response = _valid_review()
         response["run_assessments"][1]["root_causes"][0][
