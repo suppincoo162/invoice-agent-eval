@@ -8,6 +8,16 @@ from typing import Sequence
 from invoice_eval.audit_compare import compare_audits
 from invoice_eval.data import load_dataset
 from invoice_eval.evaluator import evaluate_case
+from invoice_eval.four_way import (
+    build_four_way_report,
+    load_local_manifest_statuses,
+    load_review_jsonl,
+    write_four_way_report,
+)
+from invoice_eval.four_way_analysis import (
+    analyze_four_way_report,
+    write_analysis,
+)
 from invoice_eval.llm_audit import (
     LLMConfig,
     LLMConfigError,
@@ -17,6 +27,7 @@ from invoice_eval.llm_audit import (
     audit_case,
 )
 from invoice_eval.workflow import load_workflow
+from invoice_eval.version import __version__
 
 
 DEFAULT_WORKFLOW_PATH = (
@@ -65,6 +76,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_path=args.output,
             case_id=args.case_id,
         )
+    if args.command == "four-way-report":
+        return _four_way_report(
+            deterministic_path=args.deterministic,
+            human_path=args.human,
+            local_llm_path=args.local_llm,
+            cloud_llm_path=args.cloud_llm,
+            local_manifest_path=args.local_manifest,
+            json_output_path=args.output_json,
+            markdown_output_path=args.output_md,
+        )
+    if args.command == "four-way-analysis":
+        return _four_way_analysis(
+            report_path=args.report_json,
+            deterministic_path=args.deterministic,
+            human_path=args.human,
+            local_llm_path=args.local_llm,
+            cloud_llm_path=args.cloud_llm,
+            json_output_path=args.output_json,
+            markdown_output_path=args.output_md,
+            model=args.model,
+            base_url=args.base_url,
+            timeout_seconds=args.timeout,
+        )
 
     parser.error(f"Unknown command: {args.command}")
     return 2
@@ -74,6 +108,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="invoice-eval",
         description="Evaluate pre-recorded invoice-agent trajectories.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     evaluate = commands.add_parser(
@@ -119,6 +158,39 @@ def _build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--llm-review", type=Path, required=True)
     compare.add_argument("--output", type=Path, required=True)
     compare.add_argument("--case-id")
+
+    four_way = commands.add_parser(
+        "four-way-report",
+        help=(
+            "Generate a deterministic multi-source comparison report "
+            "without calling an LLM."
+        ),
+    )
+    four_way.add_argument("--deterministic", type=Path, required=True)
+    four_way.add_argument("--human", type=Path, required=True)
+    four_way.add_argument("--local-llm", type=Path, required=True)
+    four_way.add_argument("--cloud-llm", type=Path, required=True)
+    four_way.add_argument("--local-manifest", type=Path)
+    four_way.add_argument("--output-json", type=Path, required=True)
+    four_way.add_argument("--output-md", type=Path, required=True)
+
+    analysis = commands.add_parser(
+        "four-way-analysis",
+        help=(
+            "Create a model-assisted fact/inference/unknown appendix "
+            "from a deterministic four-way report."
+        ),
+    )
+    analysis.add_argument("--report-json", type=Path, required=True)
+    analysis.add_argument("--deterministic", type=Path, required=True)
+    analysis.add_argument("--human", type=Path, required=True)
+    analysis.add_argument("--local-llm", type=Path, required=True)
+    analysis.add_argument("--cloud-llm", type=Path, required=True)
+    analysis.add_argument("--output-json", type=Path, required=True)
+    analysis.add_argument("--output-md", type=Path, required=True)
+    analysis.add_argument("--model")
+    analysis.add_argument("--base-url")
+    analysis.add_argument("--timeout", type=float)
     return parser
 
 
@@ -248,6 +320,105 @@ def _compare_audit(
         encoding="utf-8",
     )
     print(f"Wrote {len(comparisons)} comparison(s) to {output_path}")
+    return 0
+
+
+def _four_way_report(
+    deterministic_path: Path,
+    human_path: Path,
+    local_llm_path: Path,
+    cloud_llm_path: Path,
+    local_manifest_path: Path | None,
+    json_output_path: Path,
+    markdown_output_path: Path,
+) -> int:
+    paths = {
+        "deterministic": deterministic_path,
+        "human": human_path,
+        "local_llm": local_llm_path,
+        "cloud_llm": cloud_llm_path,
+    }
+    sources = {
+        source: load_review_jsonl(path)
+        for source, path in paths.items()
+    }
+    status_overrides = {}
+    if local_manifest_path is not None:
+        status_overrides["local_llm"] = load_local_manifest_statuses(
+            local_manifest_path
+        )
+    report = build_four_way_report(
+        sources=sources,
+        source_paths={
+            source: str(path) for source, path in paths.items()
+        },
+        status_overrides=status_overrides,
+    )
+    write_four_way_report(
+        report,
+        json_path=json_output_path,
+        markdown_path=markdown_output_path,
+    )
+    print(
+        f"Wrote four-way report for {report['case_count']} case(s) "
+        f"to {json_output_path} and {markdown_output_path}"
+    )
+    return 0
+
+
+def _four_way_analysis(
+    report_path: Path,
+    deterministic_path: Path,
+    human_path: Path,
+    local_llm_path: Path,
+    cloud_llm_path: Path,
+    json_output_path: Path,
+    markdown_output_path: Path,
+    model: str | None,
+    base_url: str | None,
+    timeout_seconds: float | None,
+) -> int:
+    paths = {
+        "deterministic": deterministic_path,
+        "human": human_path,
+        "local_llm": local_llm_path,
+        "cloud_llm": cloud_llm_path,
+    }
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        sources = {
+            source: load_review_jsonl(path)
+            for source, path in paths.items()
+        }
+        config = LLMConfig.from_env(
+            model=model,
+            base_url=base_url,
+            timeout_seconds=timeout_seconds,
+        )
+        analysis = analyze_four_way_report(
+            report=report,
+            sources=sources,
+            client=OpenAICompatibleClient(config),
+        )
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        LLMConfigError,
+        LLMRequestError,
+        LLMReviewValidationError,
+    ) as exc:
+        print(f"Four-way LLM analysis failed: {exc}")
+        return 1
+    write_analysis(
+        analysis,
+        json_path=json_output_path,
+        markdown_path=markdown_output_path,
+    )
+    print(
+        f"Wrote four-way LLM analysis to {json_output_path} "
+        f"and {markdown_output_path} using {config.model}"
+    )
     return 0
 
 

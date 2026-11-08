@@ -6,7 +6,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from invoice_eval import LLMConfig, audit_case, load_dataset, load_workflow
+from invoice_eval import (
+    LLMConfig,
+    __version__,
+    audit_case,
+    load_dataset,
+    load_workflow,
+)
 from invoice_eval.llm_audit import (
     DEFAULT_OLLAMA_BASE_URL,
     LLMReviewValidationError,
@@ -97,6 +103,7 @@ class LLMAuditTests(unittest.TestCase):
         )
 
         self.assertEqual(review["artifact_type"], "llm_review_v1")
+        self.assertEqual(review["evaluator_version"], __version__)
         self.assertEqual(review["model"], "mock-model")
         self.assertEqual(
             review["version_comparison"]["direction"],

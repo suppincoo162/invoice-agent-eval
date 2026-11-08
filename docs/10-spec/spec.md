@@ -120,6 +120,8 @@
 
 ## 质量评分与责任分配（T-016）
 
+> `v0.3.0` 的正式评分仍使用下方 penalty ledger。[EIR-100 Rubric](../20-design/evidence-impact-rubric.md) 与反事实信用分配是 `v0.4.0` 之前的候选设计，当前不得改变正式分数、布尔值或版本方向。
+
 ### 基本公式
 
 `quality_score` 使用确定性扣分制：
