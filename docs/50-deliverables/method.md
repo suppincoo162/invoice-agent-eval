@@ -200,3 +200,40 @@ python3 -m unittest discover -s tests -v
 - 另提供 `compare-audit`，比较确定性结果与模型盲审的方向、两个布尔值、根因、首错和证据差异。
 - 首个本地试点使用 `deepseek-r1:8b`、`llm-audit-v4` 对 `INV-V03` 完成；方向、布尔值、根因标签和首错一致，但模型没有把 `B-07` 纳入根因证据，因此不能把“结构一致”混同于“证据完全一致”。
 - 当前 Prompt 为 `llm-audit-v5`，显式要求成功 run 也提供非空证据，并禁止“有根因但处理成功”的矛盾输出。
+
+## 十三、回归闭环：一条命令复跑四个阶段
+
+> 2026-11-08 加。此前四个环节各自存在但分散在四条命令里——没有入口、没有统一结论、
+> 失败也不知道坏在哪一环。现收敛为一个入口。
+
+```bash
+python scripts/verify.py                 # 全量（含 pytest）
+python scripts/verify.py --skip-tests    # 跳过 pytest，只跑评测回归
+python scripts/verify.py --report outputs/verify-report.md   # 指定报告路径
+```
+
+四阶段（任一失败 ⇒ exit 1，但**其余阶段仍跑完**，便于一次看到全部问题）：
+
+| # | 阶段 | 断言 |
+|---|---|---|
+| 1 | 单元/回归测试 | `pytest -q` 全绿（未装 pytest 时自动退化为 `unittest discover`） |
+| 2 | 训练集归因回归 | 14 Case / 28 run 的**方向、两个布尔值、根因、首错、证据**与官方参考标注逐项一致 |
+| 3 | 验证集 + 官方校验 | 8 Case / 16 run 过 `08_提交格式校验.py`（exit 0） |
+| 4 | 确定性复跑 | 同一输入连跑两遍，输出**逐字节相同**（可复现性证据） |
+
+2026-11-08 实测：`4/4 阶段通过`；报告见 `outputs/verify-report.md`（22 个 Case 的
+「布尔结论 vs 质量分」对照表）。
+
+> ⚠️ **口径提示**：报告把「是否处理正确 / 是否生成发票」（布尔）与「`quality_score`」
+> （100 分起扣）**分两列**呈现。两者是不同口径，不可互相替代，也不应合并成单一"成功率"。
+
+## 十四、场景扩展：流程拓扑可配置（实测）
+
+- 流程字典（`01_竞赛版流程字典.json`）是**外部数据**：步骤表、顺序、必选、合法转移、
+  事件要求全部来自 JSON；换配置**不需要改 Python**。
+- 实测：`python scripts/demo-scenario-variant.py` —— 同一批 8 个验证 Case，换成
+  “不允许追问”的变体字典（唯一差异＝采集步少一条合法转移），**2/8 个 Case 判定方向改变**
+  （`baseline_better → insufficient_evidence`）。
+- **诚实边界**：业务规则层仍绑定本赛题 15 个 `step_id`（全包约 67 处硬编码引用），
+  全新领域需按域实现规则模块。逐模块耦合度、接入成本估算（约 4–7 天/领域 vs 从零 3 周）
+  与后续收敛路径见 `docs/50-deliverables/extensibility.md`。
