@@ -28,6 +28,7 @@ from invoice_eval.llm_audit import (
 )
 from invoice_eval.rubric import (
     build_rubric_report,
+    file_sha256,
     load_rubric_report,
     write_rubric_report,
 )
@@ -579,7 +580,11 @@ def _rubric_report(
     try:
         dataset = load_dataset(cases_path)
         submission = load_jsonl_cases(submission_path)
-        rows = build_rubric_report(dataset, submission)
+        rows = build_rubric_report(
+            dataset,
+            submission,
+            source_submission_sha256=file_sha256(submission_path),
+        )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f"Rubric report failed: {exc}")
         return 1

@@ -312,8 +312,11 @@ python3 -m invoice_eval rubric-report \
 ```
 
 - 正式 `quality_score`、两个布尔值、A/B 方向和 submission 均不改变。
+- Rubric 按 `run_id` 绑定 raw run，合法乱序 submission 会恢复为 A/B 顺序而不是跨 run 错配。
 - `rubric_score = min(quality_score, impact_cap)`；无封顶时与旧分相同。
 - 五维用于解释根因扣分归属，不做二次加权。
 - 封顶规则：未确认尝试提交 20；错误金额实际开票 20；重复风险后提交 20；失败回调称成功 10；多个命中取最小值。
+- 封顶证据同时包含首因和实际后果事件；错误发票会包含回调与终态，重复风险后提交会包含提交事件。
+- Rubric JSONL 绑定来源 submission SHA256、evaluator version 和生成时间；主报告消费前会校验 Case/run、旧分、布尔值、方向、公式和同 run 证据。
 - `version-report --rubric-report` 只在附录增加双轨对照；不传时主报告行为不变。
 - `scripts/verify.py` 默认仍为四阶段；`--with-rubric` 才启用第 5 阶段。

@@ -133,9 +133,15 @@ class VersionReportTests(unittest.TestCase):
         )
 
         self.assertNotIn("rubric", base)
+        self.assertTrue(base["code_commit"])
+        self.assertIn("代码提交标识", render_version_report(base))
         self.assertNotIn(
             "## 附录 E：Rubric 双轨对照",
             render_version_report(base),
+        )
+        self.assertNotIn(
+            "rubric-report",
+            render_version_report(base).lower(),
         )
         self.assertIn("rubric", with_rubric)
         self.assertEqual(with_rubric["rubric"]["changed_run_count"], 2)

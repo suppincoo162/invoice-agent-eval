@@ -397,6 +397,13 @@ def _verify_rubric_pair(
     expected_cases: int,
     expected_runs: int,
 ) -> str | None:
+    from invoice_eval import (
+        file_sha256,
+        load_dataset,
+        load_rubric_report,
+        validate_rubric_report,
+    )
+
     before = submission.read_bytes()
     proc = _run_cli(
         [
@@ -417,9 +424,16 @@ def _verify_rubric_pair(
     official = {
         row["case_id"]: row for row in _read_jsonl(submission)
     }
-    rubric = {
-        row["case_id"]: row for row in _read_jsonl(rubric_output)
-    }
+    rubric = load_rubric_report(rubric_output)
+    try:
+        validate_rubric_report(
+            load_dataset(cases),
+            official,
+            rubric,
+            source_submission_sha256=file_sha256(submission),
+        )
+    except ValueError as exc:
+        return f"Rubric 契约失败：{exc}"
     if len(official) != expected_cases or len(rubric) != expected_cases:
         return f"Case 覆盖异常：official={len(official)}, rubric={len(rubric)}"
     run_count = 0
@@ -499,7 +513,7 @@ def _git_head() -> str:
     # 那种情况下报告其实对应「HEAD + 未提交改动」，必须显式标 dirty。
     try:
         dirty = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=no"],
             cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=10,
         ).stdout.strip()
     except Exception:

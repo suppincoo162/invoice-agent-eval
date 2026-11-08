@@ -58,7 +58,9 @@ from invoice_eval.risk_controls import (
 from invoice_eval.rubric import (
     RUBRIC_VERSION,
     build_rubric_report,
+    file_sha256,
     load_rubric_report,
+    validate_rubric_report,
     write_rubric_report,
 )
 from invoice_eval.scoring import build_penalties, calculate_quality_score
@@ -110,6 +112,7 @@ __all__ = [
     "build_penalties",
     "build_four_way_report",
     "build_rubric_report",
+    "file_sha256",
     "build_version_report",
     "audit_case",
     "analyze_four_way_report",
@@ -141,6 +144,7 @@ __all__ = [
     "render_analysis_markdown",
     "validate_analysis",
     "validate_review",
+    "validate_rubric_report",
     "write_four_way_report",
     "write_rubric_report",
     "write_analysis",
