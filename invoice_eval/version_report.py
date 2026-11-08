@@ -112,12 +112,20 @@ def build_version_report(
     training_reference: Mapping[str, dict[str, Any]],
     workflow: Workflow,
     four_way_report: Mapping[str, Any] | None = None,
+    rubric_report: Mapping[str, dict[str, Any]] | None = None,
     submission_path: str | None = None,
 ) -> dict[str, Any]:
     expected_cases = {case.case_id for case in validation_dataset.cases}
     if set(validation_submission) != expected_cases:
         raise ValueError(
             "validation submission cases do not match the dataset"
+        )
+    if (
+        rubric_report is not None
+        and set(rubric_report) != expected_cases
+    ):
+        raise ValueError(
+            "rubric report cases do not match the dataset"
         )
     training = _build_training_regression(
         training_dataset,
@@ -159,7 +167,7 @@ def build_version_report(
         metrics,
         training["consistent"],
     )
-    return {
+    result = {
         "artifact_type": "version_report_data_v1",
         "generated_at": datetime.now().astimezone().isoformat(
             timespec="seconds"
@@ -186,6 +194,9 @@ def build_version_report(
         "release_recommendation": release,
         "four_way": _four_way_summary(four_way_report),
     }
+    if rubric_report is not None:
+        result["rubric"] = _rubric_summary(rubric_report)
+    return result
 
 
 def render_version_report(report: Mapping[str, Any]) -> str:
@@ -452,6 +463,7 @@ def render_version_report(report: Mapping[str, Any]) -> str:
             "python3 -m invoice_eval version-report \\",
             "  --submission outputs/validation-v0.3.0-dev.jsonl \\",
             "  --four-way-report outputs/four-way-report.json \\",
+            "  --rubric-report outputs/rubric-report.jsonl \\",
             "  --output-md docs/50-deliverables/version-report.md \\",
             "  --output-json outputs/version-report-data.json",
             "```",
@@ -460,12 +472,56 @@ def render_version_report(report: Mapping[str, Any]) -> str:
             "|---|---|",
             f"| `{report['submission_path'] or '未提供'}` | 官方 Schema 的机器可读结果 |",
             "| `outputs/version-report-data.json` | 本报告的机器可读聚合数据 |",
+            "| `outputs/rubric-report.jsonl` | 可选 Rubric 双轨细分明细 |",
             "| [method.md](method.md) | 方法、评分和证据纪律 |",
             "| [review-final.md](review-final.md) | 内部交付验收记录 |",
             "| [extensibility.md](extensibility.md) | 场景扩展说明 |",
             "",
         ]
     )
+    rubric = report.get("rubric")
+    if rubric is not None:
+        lines.extend(
+            [
+                "## 附录 E：Rubric 双轨对照",
+                "",
+                f"> Rubric 版本：`{rubric['rubric_version']}`。"
+                "正式 `quality_score` 与 A/B 方向不变，本附录仅提供影响感知评分。",
+                "",
+                f"- 平均 `quality_score`：{rubric['average_quality_score']:.3f}；",
+                f"- 平均 `rubric_score`：{rubric['average_rubric_score']:.3f}；",
+                f"- 分数发生变化 run：{rubric['changed_run_count']}；",
+                f"- 触发影响封顶 run：{rubric['capped_run_count']}。",
+                "",
+                "| Case / run | 旧分 | 封顶 | rubric_score | 封顶原因 | 五维扣分归属 |",
+                "|---|---:|---:|---:|---|---|",
+            ]
+        )
+        for row in rubric["runs"]:
+            reasons = "；".join(
+                f"{item['reason']}={item['cap']}"
+                for item in row["cap_reasons"]
+            ) or "-"
+            dimensions = "；".join(
+                f"{name}={points}"
+                for name, points in row["dimension_penalties"].items()
+                if points
+            ) or "-"
+            lines.append(
+                "| "
+                + " | ".join(
+                    (
+                        row["run_id"],
+                        str(row["quality_score"]),
+                        str(row["impact_cap"] or "-"),
+                        str(row["rubric_score"]),
+                        reasons,
+                        dimensions,
+                    )
+                )
+                + " |"
+            )
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -871,6 +927,41 @@ def _four_way_summary(
             f"{local.get('present_count', 0)}/"
             f"{report.get('case_count', 0)}"
         ),
+    }
+
+
+def _rubric_summary(
+    rubric_report: Mapping[str, dict[str, Any]],
+) -> dict[str, Any]:
+    runs = [
+        run
+        for case in rubric_report.values()
+        for run in case.get("run_assessments", [])
+    ]
+    return {
+        "rubric_version": next(
+            (
+                case.get("rubric_version")
+                for case in rubric_report.values()
+                if case.get("rubric_version")
+            ),
+            "unknown",
+        ),
+        "run_count": len(runs),
+        "average_quality_score": _average(
+            run.get("quality_score", 0) for run in runs
+        ),
+        "average_rubric_score": _average(
+            run.get("rubric_score", 0) for run in runs
+        ),
+        "changed_run_count": sum(
+            run.get("quality_score") != run.get("rubric_score")
+            for run in runs
+        ),
+        "capped_run_count": sum(
+            run.get("impact_cap") is not None for run in runs
+        ),
+        "runs": runs,
     }
 
 

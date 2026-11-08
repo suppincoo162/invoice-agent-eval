@@ -55,6 +55,12 @@ from invoice_eval.risk_controls import (
     find_duplicate_control_root_causes,
     find_submit_timeout_root_causes,
 )
+from invoice_eval.rubric import (
+    RUBRIC_VERSION,
+    build_rubric_report,
+    load_rubric_report,
+    write_rubric_report,
+)
 from invoice_eval.scoring import build_penalties, calculate_quality_score
 from invoice_eval.submission import find_submit_argument_root_causes
 from invoice_eval.tooling import (
@@ -91,6 +97,7 @@ __all__ = [
     "OpenAICompatibleClient",
     "PenaltyItem",
     "ProtectiveRejection",
+    "RUBRIC_VERSION",
     "RootCause",
     "Run",
     "Workflow",
@@ -102,6 +109,7 @@ __all__ = [
     "compare_audits",
     "build_penalties",
     "build_four_way_report",
+    "build_rubric_report",
     "build_version_report",
     "audit_case",
     "analyze_four_way_report",
@@ -125,6 +133,7 @@ __all__ = [
     "load_dataset",
     "load_local_manifest_statuses",
     "load_review_jsonl",
+    "load_rubric_report",
     "load_jsonl_cases",
     "load_workflow",
     "render_four_way_markdown",
@@ -133,6 +142,7 @@ __all__ = [
     "validate_analysis",
     "validate_review",
     "write_four_way_report",
+    "write_rubric_report",
     "write_analysis",
     "write_version_report",
 ]

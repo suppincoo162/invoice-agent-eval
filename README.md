@@ -118,6 +118,27 @@ python -m invoice_eval version-report \
   --output-json outputs/version-report-data.json
 ```
 
+可选 Rubric 双轨报告：
+
+```bash
+python -m invoice_eval rubric-report \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --output outputs/rubric-report.jsonl
+```
+
+Rubric 不修改正式 submission 或版本方向。主报告要展示 Rubric 附录时，额外传入：
+
+```bash
+--rubric-report outputs/rubric-report.jsonl
+```
+
+一键回归显式追加 Rubric 第 5 阶段：
+
+```bash
+python scripts/verify.py --with-rubric
+```
+
 云端 API 与 Ollama 使用同一接口，只需切换 `BASE_URL` 和 `MODEL`。
 API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，也不会写入
 审计结果或缓存。
@@ -134,6 +155,6 @@ API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，�
 |---|---|
 | **所处阶段** | **`v0.3.0-dev`：确定性评测、训练/验证回归、LLM 独立盲审和四源报告生成器已完成；进入创新分析与决赛打磨** |
 | 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) · 可选 OpenAI-compatible/Ollama 盲审 |
-| 未完成 | DeepSeek 分析附录实跑 · 本地 V04 最终处理 · Rubric · 反事实薄切片 · 决赛演示材料 · `v0.3.0` 最终发布包 |
-| **下一步** | 配置原 DeepSeek Key，实跑四源分析；随后完成 Rubric 与反事实薄切片 |
+| 未完成 | DeepSeek 分析附录重跑 · 静态 HTML · 反事实薄切片 · 本地 V04 最终处理 · 决赛演示材料 · `v0.3.0` 最终发布包 |
+| **下一步** | 完成静态 HTML 与反事实薄切片；用当前四源输入重跑分析附录 |
 | 谁能动 | 任何人都可以读；**改 `main` 一律走 MR**（见 [`docs/git-workflow.md`](docs/git-workflow.md)）；`docs/00-brief/data/` 是组委会资料，**只读** |

@@ -74,6 +74,6 @@
 ## 后续候选（未排期，不影响当前 MVP）
 
 - [x] **T-028** 固化 EIR-100 Rubric 候选设计：五维评分、影响封顶、证据置信度分离 —— ✅ 证据：[`20-design/evidence-impact-rubric.md`](../20-design/evidence-impact-rubric.md)、ADR-006
-- [ ] **T-029** 实现 Rubric 双轨输出并完成 28+16 校准 —— 验收：正式方向不变；`rubric_score` 可由维度和证据解释；封顶与传播去重有测试
+- [x] **T-029** 实现 Rubric 双轨输出并完成 28+16 校准 —— ✅ 证据：[`invoice_eval/rubric.py`](../../invoice_eval/rubric.py)、[`tests/test_rubric.py`](../../tests/test_rubric.py)、`scripts/verify.py --with-rubric`
 - [ ] **T-030** 实现反事实最小修复薄切片 —— 验收：金额、上下文、提交漂移、批量明细四类；仅内部视图；无法修复时明确降级
 - [ ] **T-021** 评估是否试点反事实最小修复与对象感知信用分配 —— 前置：T-010 完成，且训练集出现至少两个真实归因缺失或重复；即使试点也只能影响内部归因与 `downstream_impact`，不得改变 schema、布尔结论或评分规则。设计与门槛见 [`20-design/counterfactual-attribution.md`](../20-design/counterfactual-attribution.md)、[`20-design/decisions.md`](../20-design/decisions.md) ADR-004

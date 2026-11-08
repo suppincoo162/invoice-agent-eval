@@ -108,6 +108,7 @@
 - **校准**：14 Case / 28 run 与 8 Case / 16 run 双轨运行；方向必须一致；分差必须能由公开维度和证据解释。
 - **切换条件**：至少完成金额、上下文、提交漂移和批量明细四类修复；封顶规则和传播去重有回归测试；团队复核后才考虑在 `v0.4.0` 切换正式评分。
 - **回滚**：删除 `rubric_score` / 反事实报告输出即可，旧 `quality_score` 不受影响。
+- **2026-11-08 实施留痕**：已实现独立 `rubric-report`、`impact-aware-dual-v1` 和 `--with-rubric` 可选回归阶段；`version-report` 仅在显式传入 Rubric JSONL 时追加附录。默认四阶段和正式 submission 保持不变。
 
 ## 待记录
 

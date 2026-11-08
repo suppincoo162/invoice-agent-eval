@@ -12,7 +12,7 @@
 |---|---|
 | 评测程序版本 | `invoice_eval v0.3.0-dev` |
 | 数据包版本 | `student-1.0` |
-| 评测时间 | 2026-11-08T18:07:16+08:00 |
+| 评测时间 | 2026-11-08T19:40:45+08:00 |
 | 待测 Case 数 | 8 |
 | 有效 A/B 成对 Case 数 | 8 |
 | 训练校准 | 14 Case / 28 run；全部一致 |
@@ -132,6 +132,7 @@ python3 scripts/verify.py --report /tmp/verify.md
 python3 -m invoice_eval version-report \
   --submission outputs/validation-v0.3.0-dev.jsonl \
   --four-way-report outputs/four-way-report.json \
+  --rubric-report outputs/rubric-report.jsonl \
   --output-md docs/50-deliverables/version-report.md \
   --output-json outputs/version-report-data.json
 ```
@@ -140,6 +141,35 @@ python3 -m invoice_eval version-report \
 |---|---|
 | `outputs/validation-v0.3.0-dev.jsonl` | 官方 Schema 的机器可读结果 |
 | `outputs/version-report-data.json` | 本报告的机器可读聚合数据 |
+| `outputs/rubric-report.jsonl` | 可选 Rubric 双轨细分明细 |
 | [method.md](method.md) | 方法、评分和证据纪律 |
 | [review-final.md](review-final.md) | 内部交付验收记录 |
 | [extensibility.md](extensibility.md) | 场景扩展说明 |
+
+## 附录 E：Rubric 双轨对照
+
+> Rubric 版本：`impact-aware-dual-v1`。正式 `quality_score` 与 A/B 方向不变，本附录仅提供影响感知评分。
+
+- 平均 `quality_score`：84.375；
+- 平均 `rubric_score`：78.125；
+- 分数发生变化 run：2；
+- 触发影响封顶 run：2。
+
+| Case / run | 旧分 | 封顶 | rubric_score | 封顶原因 | 五维扣分归属 |
+|---|---:|---:|---:|---|---|
+| INV-V01-A | 100 | - | 100 | - | - |
+| INV-V01-B | 70 | - | 70 | - | business_correctness=30 |
+| INV-V02-A | 50 | - | 50 | - | authorization_risk=50 |
+| INV-V02-B | 100 | - | 100 | - | - |
+| INV-V03-A | 100 | - | 100 | - | - |
+| INV-V03-B | 50 | - | 50 | - | business_correctness=50 |
+| INV-V04-A | 70 | - | 70 | - | intent_context=30 |
+| INV-V04-B | 100 | - | 100 | - | - |
+| INV-V05-A | 100 | - | 100 | - | - |
+| INV-V05-B | 70 | - | 70 | - | business_correctness=30 |
+| INV-V06-A | 100 | - | 100 | - | - |
+| INV-V06-B | 100 | - | 100 | - | - |
+| INV-V07-A | 100 | - | 100 | - | - |
+| INV-V07-B | 70 | 20 | 20 | WRONG_INVOICE_CREATED=20 | business_correctness=30 |
+| INV-V08-A | 70 | 20 | 20 | WRONG_INVOICE_CREATED=20 | workflow_tools=30 |
+| INV-V08-B | 100 | - | 100 | - | - |
