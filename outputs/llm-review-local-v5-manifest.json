@@ -1,0 +1,37 @@
+{
+  "artifact_type": "llm_audit_run_manifest_v1",
+  "source": "local_llm",
+  "provider": "ollama-openai-compatible",
+  "evaluator_version": "0.3.0-dev",
+  "model": "deepseek-r1:14b",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "prompt_version": "llm-audit-v5",
+  "temperature": 0,
+  "timeout_seconds": 900,
+  "cache_dir": "outputs/llm-cache-local-v5",
+  "run_status": "partial_valid",
+  "created_at": "2026-11-08",
+  "valid_cases": [
+    "INV-V01",
+    "INV-V02",
+    "INV-V03",
+    "INV-V05",
+    "INV-V06",
+    "INV-V07",
+    "INV-V08"
+  ],
+  "rejected_cases": [
+    {
+      "case_id": "INV-V04",
+      "run_id": "INV-V04-A",
+      "status": "contract_rejected",
+      "reason": "successful run cannot include a root cause"
+    }
+  ],
+  "command": "python3 -m invoice_eval audit --cases docs/00-brief/data/04_无标注验证轨迹.jsonl --workflow docs/00-brief/data/01_竞赛版流程字典.json --rules docs/00-brief/rules.md --output outputs/llm-review-local-v5-all.jsonl --model deepseek-r1:14b --base-url http://127.0.0.1:11434/v1 --timeout 900 --cache-dir outputs/llm-cache-local-v5",
+  "notes": [
+    "Cache stores validated case reviews but not model metadata.",
+    "Model and prompt provenance in this manifest is declared from the actual invocation.",
+    "INV-V04 is a real contract rejection, not a missing comparison."
+  ]
+}
