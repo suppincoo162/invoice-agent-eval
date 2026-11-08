@@ -1,0 +1,11 @@
+{
+  "artifact_type": "human_review_manifest_v1",
+  "review_target_version": "deterministic-v0.2.1",
+  "review_target_submission": "outputs/validation-v021.jsonl",
+  "review_status": "first_pass_complete",
+  "reviewed_at": "2026-11-07",
+  "remediation_version": "v0.3.0-dev",
+  "planned_release_version": "v0.3.0",
+  "source_markdown": "outputs/manual-review/v0.2.1-first-pass.md",
+  "structured_review": "outputs/manual-review/v0.2.1-first-pass.jsonl"
+}

@@ -1,0 +1,37 @@
+{
+  "artifact_type": "human_delta_review_manifest_v1",
+  "review_status": "completed",
+  "reviewer": "codex",
+  "review_type": "assistant_delta_review",
+  "completed_at": "2026-11-08",
+  "review_target_version": "v0.3.0-dev",
+  "current_submission": "outputs/validation-v0.3.0-dev.jsonl",
+  "previous_review": "outputs/manual-review/v0.2.1-first-pass.md",
+  "delta_review": "outputs/manual-review/v0.3.0-delta-review.md",
+  "structured_review": "outputs/manual-review/v0.3.0-delta-review.jsonl",
+  "unchanged_facts": [
+    "version direction",
+    "agent_task_success",
+    "business_invoice_created",
+    "quality_score",
+    "root cause labels",
+    "first fault events",
+    "root-cause evidence"
+  ],
+  "changed_scope": "run-level evidence_event_ids only",
+  "p0_runs": [
+    "INV-V02-B",
+    "INV-V07-A",
+    "INV-V07-B",
+    "INV-V08-A",
+    "INV-V08-B"
+  ],
+  "p1_runs": [
+    "INV-V01-A",
+    "INV-V03-A",
+    "INV-V04-B",
+    "INV-V05-A",
+    "INV-V06-A",
+    "INV-V06-B"
+  ]
+}
