@@ -15,14 +15,20 @@
 python scripts/demo-scenario-variant.py
 ```
 
-预期输出（2026-11-08 实测）：
+预期输出（**2026-11-08 实测**，格式可能随演示脚本演进而变化）：
 
 ```text
-INV-V01    baseline_better        insufficient_evidence    1→1    1→2  ← 变
-INV-V03    baseline_better        insufficient_evidence    1→1    1→2  ← 变
+INV-V01    baseline_better        insufficient_evidence  100/70  0/70 ← 变
+    └ A 成功 是→否 · B 成功 否→否 · 根因 ['AMOUNT_BASIS'] →['INSUFFICIENT_EVIDENCE', 'AMOUNT_BASIS']
+INV-V03    baseline_better        insufficient_evidence  100/50  0/50 ← 变
 ...
 结论：2/8 个 Case 的判定随配置改变
 ```
+
+> [!NOTE]
+> 变体下 A 被判「证据不足」而非「流程违规」：官方根因标签白名单没有"流程违规"标签，
+> 按既有映射归入 `INSUFFICIENT_EVIDENCE`；这不是本次新增逻辑，详见
+> `docs/50-deliverables/extensibility.md` §二。
 
 ## 哪些东西在这里换，哪些不能（诚实边界）
 
@@ -30,7 +36,7 @@ INV-V03    baseline_better        insufficient_evidence    1→1    1→2  ← �
 |---|---|---|
 | **流程拓扑**（步骤表 / 顺序 / 必选 / 合法转移 / 事件要求） | `docs/00-brief/data/01_竞赛版流程字典.json` 或本目录的变体 | ❌ **不用** |
 | **Case 与轨迹** | `docs/00-brief/data/*.jsonl` | ❌ 不用 |
-| **业务规则**（金额口径、实体归一、确认、回调、重复控制、商品匹配等） | `invoice_eval/*.py` | ✅ **要**——这些规则按本赛题 15 个 step_id 实现，全包约 67 处硬编码 step_id 引用 |
+| **业务规则**（金额口径、实体归一、确认、回调、重复控制、商品匹配等） | `invoice_eval/*.py` | ✅ **要**——这些规则按本赛题 15 个 step_id 实现，全包实测 70 处 step_id 字符串引用 |
 
 详见 `docs/50-deliverables/extensibility.md`（含逐模块耦合度与接入新领域的成本估算）。
 

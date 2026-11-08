@@ -9,67 +9,81 @@
 |---|---|
 | 流程拓扑（步骤/顺序/必选/转移/事件要求）是**外部数据**，换场景不改代码 | ✅ **已实测**（`python scripts/demo-scenario-variant.py`：2/8 Case 判定随配置改变） |
 | Case 与轨迹是**外部数据** | ✅ 已实测（换 `--cases` 即可跑任意集） |
-| 业务规则层**绑定本赛题 step_id**，全新领域需要按域实现 | ⚠️ **实测 67 处硬编码 step_id 引用**，见 §三 |
-| 一次性新增"全新领域"的接入成本 | 📐 估算 **200–400 行新规则模块 + 1 份流程字典 + 1 份 Case 集**（依据见 §四，未实测） |
+| 业务规则层**绑定本赛题 step_id**，全新领域需要按域实现 | ⚠️ **实测 70 处 step_id 字符串引用**，见 §三 |
+| 新领域可复用的是**框架与工具链**（加载/评分/回归/报告/官方校验），**规则本身不可复用** | ✅ 依据见 §四 |
 
 ## 二、可配置面（换场景零代码改动）
 
 | 配置 | 位置 | 作用 |
 |---|---|---|
 | 流程字典 | `docs/00-brief/data/01_竞赛版流程字典.json` | 15 步步骤表、`required_by_default`、`possible_next_steps`、`event_requirement` |
-| 场景变体 | `configs/workflow-variant-strict-no-supplement.json` | 同 15 步，但采集步不允许追问 ⇒ 模拟自助场景 |
+| 场景变体 | `configs/workflow-variant-strict-no-supplement.json` | 同 15 步，但采集步不允许追问 ⇒ 模拟「自助开票场景」 |
 | Case / 轨迹 | `docs/00-brief/data/02_…jsonl`、`04_…jsonl` | 换 `--cases` 即可评测任意数据集 |
 | 业务规则文本 | `docs/00-brief/rules.md` | 供 `audit` 盲审的提示词素材（不参与确定性判定） |
 
 **实测证据**（2026-11-08，`scripts/demo-scenario-variant.py`）：
 
 ```text
-INV-V01    baseline_better        insufficient_evidence    1→1    1→2  ← 变
-INV-V03    baseline_better        insufficient_evidence    1→1    1→2  ← 变
+INV-V01  baseline_better → insufficient_evidence   A/B 分 100/70 → 0/70  ← 变
+INV-V03  baseline_better → insufficient_evidence   A/B 分 100/50 → 0/50  ← 变
 结论：2/8 个 Case 的判定随配置改变
 ```
 
-两份字典的差异**只有一行转移**，Python 代码零改动 ⇒ 流程拓扑确实是数据。
+两份字典的差异**只有一行转移**（`COLLECT_INVOICE_DATA` 的合法后继少一个），Python 代码零改动。
+
+> [!NOTE]
+> **为什么变体下 A 被判「证据不足」而不是「流程违规」**：A 的轨迹正是通过 `WAIT_USER_SUPPLEMENT` 完成追问的；变体把这条转移判为非法后，A 的处理路径在该场景下不成立。官方根因标签白名单**没有**"流程违规"这一标签，因此按既有设计归入 `INSUFFICIENT_EVIDENCE`（无法归因到更具体标签）。这是本评测器既有的标签映射，不是本次新增逻辑。
 
 ## 三、耦合度实测：业务规则层绑定 step_id
 
-统计方法：在 `invoice_eval/*.py` 中检索 15 个 step_id 的**字符串字面量**出现次数。
+统计口径：`invoice_eval/*.py` 中 20 个 step_id 的**字符串字面量**出现次数
+（用 `tokenize` 只取 STRING token 复核，与原文计数相同 ⇒ 不含注释造成的高估）。
 
-| 模块 | 硬编码 step_id | 说明 |
-|---|---:|---|
-| `invoice_types.py` | 17 | 任务类型/红票识别与步骤序列绑定 |
-| `risk_controls.py` | 11 | 确认旁路、重复控制等安全规则 |
-| `evaluator.py` | 10 | 主流程编排与降级判定 |
-| `amounts.py` | 9 | 金额口径、计算、编造检测 |
-| `entities.py` | 8 | 实体归一与歧义消解 |
-| `conversation.py` | 3 | 对话轮次/追问判定 |
-| `callbacks.py` / `confirmation.py` / `submission.py` | 各 2 | 回调、确认、提交校验 |
-| `tooling.py` / `workflow.py` | 各 1–2 | 工具参数、拓扑校验 |
-| **合计** | **67** | —— |
+| 模块 | step_id 引用 | 模块行数 |
+|---|---:|---:|
+| `amounts.py` | 9 | 324 |
+| `risk_controls.py` | 13 | 205 |
+| `invoice_types.py` | 18 | 278 |
+| `evaluator.py` | 10 | 498 |
+| `entities.py` | 8 | 142 |
+| `conversation.py` | 3 | 100 |
+| `callbacks.py` / `confirmation.py` / `submission.py` | 各 2 | 58 / 62 / 94 |
+| `tooling.py` / `workflow.py` | 1 / 2 | 65 / 229 |
+| **合计** | **70** | —— |
+
+（9 个业务规则模块合计约 **1,328 行**；`cli.py` / `data.py` / `scoring.py` / `models.py` 等属框架层，不计入。）
 
 ⇒ **诚实结论**：这不是"通用评测框架"，而是"**一个领域内、拓扑可配置**"的评测器。
-这一点必须主动写在文档里——评审最反感的是把有限能力说成无限能力。
+本文明确区分这两者，避免把能力边界说得比实际宽。
 
-## 四、接一个全新领域要什么（估算依据）
+## 四、接一个全新领域要什么（按实测反推）
 
-按现有模块体量反推（每个规则模块 80–120 行，覆盖一类判据）：
-
-| 步骤 | 工作量 | 是否可复用 |
+| 步骤 | 是否可复用 | 说明 |
 |---|---|---|
-| 1. 写流程字典 | 0.5 天（15 步左右） | ✅ 结构完全复用 |
-| 2. 写 Case 与轨迹数据 | 1–2 天（取决于领域） | ⚠️ 需人工构造或采集 |
-| 3. 写领域规则模块（金额/实体/确认等按域重写） | **2–4 天**（200–400 行） | ❌ 不可复用，这是产品本体 |
-| 4. 写回归用例 | 0.5–1 天（可套 `scripts/verify.py`） | ✅ 框架复用 |
-| **合计** | **约 4–7 天/领域** | 框架与工具链免费，规则不免费 |
+| 流程字典 | ✅ 结构完全复用 | 0.5 天（15 步左右） |
+| Case 与轨迹数据 | ⚠️ 需按领域构造/采集 | 1–2 天，取决于数据可得性 |
+| 领域规则模块 | ❌ **不可复用**（产品本体） | 按覆盖判据面估算，见下 |
+| 回归用例 | ✅ 框架免费（`scripts/verify.py` 四阶段直接复用） | 0.5–1 天 |
+| 官方格式校验 | ✅ 免费（`08_提交格式校验.py` 通用） | 0 |
+| 报告与四阶段回归 | ✅ 免费 | 0 |
 
-> 对照：如果从零写一个同水平的评测器（流程 + 规则 + 测试 + 官方校验 + 报告），按本项目
-> 的提交历史估算约 **3 周**。⇒ 接入新领域的边际成本约为**从零开始的 1/4**。
+**规则工作量按覆盖面对照**（依据：本项目 9 个规则模块 1,328 行覆盖 14 类根因）：
+
+- 只覆盖**通用判据**（流程合法性 / 确认旁路 / 金额口径，约 3 类）⇒ **约 300–500 行 / 2–3 天**；
+- 覆盖**同等判据面**（14 类根因全量）⇒ **约 1,000–1,300 行 / 5–8 天**。
+
+**参照基准（实测，非估算）**：本项目从首次提交（2026-10-27）到 v0.2.1（2026-11-05）
+共 **8.2 天 / 44 个提交**，这 8.2 天里**包含**了赛题研究、架构、框架、规则、测试、
+官方校验、文档全套。
+
+⇒ 因此扩展性的真实价值是：**框架、评分、回归、报告、格式校验这 3–5 天基建不用重写**；
+但**领域规则必须重写**。不承诺"换配置就支持任意新领域"。
 
 ## 五、如果要做到"任意领域低成本接入"，缺什么（提案，未实现）
 
 1. **规则注册表**：把 11 个规则模块收敛为 `RuleSet` 协议（`check(case, run) -> findings`），
-   按领域注册，`evaluator` 只依赖协议、不依赖具体模块 ⇒ 67 处硬编码可降到个位数。
-2. **step_id 语义别名层**：流程字典里给每个 step 标注 `semantic_role`（如 `collect` / `confirm` / `submit`），
+   按领域注册，`evaluator` 只依赖协议、不依赖具体模块 ⇒ 70 处硬编码可降到个位数。
+2. **step_id 语义别名层**：流程字典给每个 step 标注 `semantic_role`（`collect` / `confirm` / `submit`），
    规则按角色而非按 ID 匹配 ⇒ 换领域只需映射角色。
 3. **回归模板**：`scripts/verify.py` 已具备，接入新领域时直接复用四阶段。
 
@@ -81,5 +95,5 @@ INV-V03    baseline_better        insufficient_evidence    1→1    1→2  ← �
 ```bash
 python scripts/verify.py                      # 四阶段回归（含 22 Case 全量）
 python scripts/demo-scenario-variant.py       # 拓扑配置化演示（2/8 判定改变）
-python scripts/verify.py --report outputs/verify-report.md   # 生成报告
+python scripts/verify.py --report outputs/verify-report.md   # 报告生成位置
 ```

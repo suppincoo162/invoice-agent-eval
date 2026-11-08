@@ -221,8 +221,9 @@ python scripts/verify.py --report outputs/verify-report.md   # 指定报告路�
 | 3 | 验证集 + 官方校验 | 8 Case / 16 run 过 `08_提交格式校验.py`（exit 0） |
 | 4 | 确定性复跑 | 同一输入连跑两遍，输出**逐字节相同**（可复现性证据） |
 
-2026-11-08 实测：`4/4 阶段通过`；报告见 `outputs/verify-report.md`（22 个 Case 的
-「布尔结论 vs 质量分」对照表）。
+2026-11-08 实测：`4/4 阶段通过`；运行后自动生成 `outputs/verify-report.md`（22 个 Case 的
+「布尔结论 vs 质量分」对照表，含生成时间与代码版本）。⚠️ 该文件是**运行产物**，是否纳入
+版本控制取决于 `.gitignore` 中 `outputs/` 的设置——评审机器上跑一次 `scripts/verify.py` 即可复现。
 
 > ⚠️ **口径提示**：报告把「是否处理正确 / 是否生成发票」（布尔）与「`quality_score`」
 > （100 分起扣）**分两列**呈现。两者是不同口径，不可互相替代，也不应合并成单一"成功率"。
@@ -234,6 +235,6 @@ python scripts/verify.py --report outputs/verify-report.md   # 指定报告路�
 - 实测：`python scripts/demo-scenario-variant.py` —— 同一批 8 个验证 Case，换成
   “不允许追问”的变体字典（唯一差异＝采集步少一条合法转移），**2/8 个 Case 判定方向改变**
   （`baseline_better → insufficient_evidence`）。
-- **诚实边界**：业务规则层仍绑定本赛题 15 个 `step_id`（全包约 67 处硬编码引用），
-  全新领域需按域实现规则模块。逐模块耦合度、接入成本估算（约 4–7 天/领域 vs 从零 3 周）
+- **诚实边界**：业务规则层仍绑定本赛题 15 个 `step_id`（全包实测 70 处字符串引用，含注释复核后），
+  全新领域需按域实现规则模块。逐模块耦合度、接入成本估算（按覆盖判据面 2–8 天/领域；本项目从零到 v0.2.1 实测 8.2 天）
   与后续收敛路径见 `docs/50-deliverables/extensibility.md`。

@@ -41,11 +41,21 @@ VARIANT_WORKFLOW = PROJECT_ROOT / "configs" / "workflow-variant-strict-no-supple
 DEFAULT_CASES = DATA_DIR / "04_无标注验证轨迹.jsonl"
 
 
-def _run_counts(result: dict) -> tuple[int, int]:
-    """返回 (扣分项总数, 根因总数)，用于对比两个场景下的判定强度。"""
-    penalties = sum(len(r.get("penalty_items") or []) for r in result["run_assessments"])
-    roots = sum(len(r.get("root_causes") or []) for r in result["run_assessments"])
-    return penalties, roots
+def _run_profile(result: dict) -> tuple[str, str, str, str]:
+    """返回 (A 分, B 分, A 成功, B 成功)。
+
+    ⚠️ 不要只比"扣分项数量"：变体里 A 的分数会从 100 掉到 0（被降级为
+    INSUFFICIENT_EVIDENCE），但扣分项数量不变——只比数量会掩盖真正的变化。
+    """
+    runs = result["run_assessments"]
+    a = runs[0] if len(runs) > 0 else {}
+    b = runs[1] if len(runs) > 1 else {}
+    return (
+        str(a.get("quality_score", "-")),
+        str(b.get("quality_score", "-")),
+        "是" if a.get("agent_task_success") else "否",
+        "是" if b.get("agent_task_success") else "否",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  基线：{workflow_base.workflow_id}（{len(workflow_base.steps)} 步）")
     print(f"  变体：{workflow_variant.workflow_id}（{len(workflow_variant.steps)} 步）")
     print("-" * 78)
-    print(f"  {'Case':10s} {'基线方向':22s} {'变体方向':22s} {'扣分项':>7s} {'根因':>5s}")
+    print(f"  {'Case':10s} {'基线方向':22s} {'变体方向':22s} {'A/B 分':>9s} {'A/B 分(变)':>10s} {'变'}")
     print("-" * 78)
 
     changed = 0
@@ -73,20 +83,31 @@ def main(argv: list[str] | None = None) -> int:
         var = evaluate_case(case, workflow_variant)
         base_dir = base["version_comparison"]["direction"]
         var_dir = var["version_comparison"]["direction"]
-        base_pen, base_root = _run_counts(base)
-        var_pen, var_root = _run_counts(var)
-        mark = " ← 变" if (base_dir != var_dir or base_pen != var_pen) else ""
-        if mark:
+        base_score_a, base_score_b, base_succ_a, base_succ_b = _run_profile(base)
+        var_score_a, var_score_b, var_succ_a, var_succ_b = _run_profile(var)
+        changed_here = (base_dir != var_dir) or (base_score_a != var_score_a) \
+            or (base_score_b != var_score_b)
+        mark = " ← 变" if changed_here else ""
+        if changed_here:
             changed += 1
         print(
             f"  {case.case_id:10s} {base_dir:22s} {var_dir:22s} "
-            f"{base_pen:>3d}→{var_pen:<3d} {base_root:>2d}→{var_root:<2d}{mark}"
+            f"{base_score_a:>2s}/{base_score_b:<2s} {var_score_a:>2s}/{var_score_b:<2s}{mark}"
         )
+        if changed_here:
+            print(
+                f"    └ A 成功 {base_succ_a}→{var_succ_a} · B 成功 {base_succ_b}→{var_succ_b}"
+                f" · 根因 {[(x['label']) for ra in base['run_assessments'] for x in ra['root_causes']]} "
+                f"→{[(x['label']) for ra in var['run_assessments'] for x in ra['root_causes']]}"
+            )
 
     print("-" * 78)
     print(f"  结论：{changed}/{len(dataset.cases)} 个 Case 的判定随配置改变")
     print("  证据：两份流程字典的差异仅在 COLLECT_INVOICE_DATA 的合法转移上（少了"
           " WAIT_USER_SUPPLEMENT 一条），Python 代码零改动。")
+    print("  说明：变体下 A 的追问路径被禁用 ⇒ A 判不成立。官方根因标签白名单没有"
+          "「流程违规」标签，")
+    print("        故按既有映射归入 INSUFFICIENT_EVIDENCE——这是既有设计，不是本次新增逻辑。")
     print("  边界：业务规则层仍绑定本赛题 15 个 step_id；全新领域需按域实现规则，"
           "详见 configs/README.md。")
     return 0

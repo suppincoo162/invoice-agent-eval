@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import subprocess
 import sys
@@ -122,6 +123,11 @@ def stage_tests() -> StageResult:
 
 # ── 阶段 2：训练集归因回归（有专家标注，逐 run 对账）─────────────────────
 def _root_map(root_causes: list[dict]) -> dict[str, tuple]:
+    """根因 → (首错, 证据元组)。
+
+    ⚠️ 证据元组**按序比较**（不放宽）：同一根因的证据顺序变了也算不一致——
+    这是有意选择的严格口径，与 `tests/test_training_regression.py` 保持一致。
+    """
     return {
         str(root.get("label")): (
             root.get("first_fault_event_id"),
@@ -140,6 +146,7 @@ def stage_training() -> StageResult:
 
     mismatches: list[str] = []
     rows: list[dict] = []
+    compared_runs = 0
     for case in dataset.cases:
         actual = evaluate_case(case, workflow)
         expected = reference.get(case.case_id)
@@ -147,6 +154,18 @@ def stage_training() -> StageResult:
             mismatches.append(f"{case.case_id}: 参考标注缺失")
             continue
         rows.append(_summary_row(case.case_id, actual, labelled=True))
+
+        # 🔴 2026-11-08 复核修（对抗测试实测）：原实现对 run 列表直接 zip，
+        # 参考标注少写 run 时会**静默截断并判通过**（假绿）。现显式校验长度。
+        actual_runs = actual["run_assessments"]
+        expected_runs = expected.get("run_assessments", [])
+        if len(actual_runs) != len(expected_runs):
+            mismatches.append(
+                f"{case.case_id}: run 数 {len(actual_runs)} ≠ 标注 {len(expected_runs)}"
+                "（数据/标注不同步，不能判一致）"
+            )
+            continue
+        compared_runs += len(actual_runs)
 
         if actual["version_comparison"]["direction"] != expected.get(
             "version_direction_on_this_case"
@@ -169,9 +188,15 @@ def stage_training() -> StageResult:
             ):
                 mismatches.append(f"{rid}: 根因/首错/证据 与标注不一致")
 
+    # 反向覆盖：参考标注里存在、数据集里却没有的 Case（同样不能静默放过）
+    dataset_ids = {c.case_id for c in dataset.cases}
+    uncovered = sorted(set(reference) - dataset_ids)
+    if uncovered:
+        mismatches.append(f"参考标注存在但数据集缺失的 Case：{uncovered}")
+
     ok = not mismatches
     detail = (
-        f"{len(dataset.cases)} Case / {sum(len(c.runs) for c in dataset.cases)} run 全部一致"
+        f"{len(dataset.cases)} Case / {compared_runs} run 全部一致"
         if ok
         else f"{len(mismatches)} 处不一致：" + "；".join(mismatches[:6])
     )
@@ -209,14 +234,29 @@ def stage_validation(workdir: Path) -> StageResult:
         errors="replace",
     )
     rows = _summary_rows_from_submission(out)
-    ok = validator.returncode == 0
+    # 🔴 2026-11-08 复核加：官方校验器只查格式，不查"是否每个 Case 都出了结果"。
+    # 少了 Case 也照样 exit 0 ⇒ 这里必须自己补覆盖校验。
+    expected_cases = [item.get("case_id") for item in _read_jsonl(VALID_CASES)]
+    produced = _read_jsonl(out)
+    produced_ids = [item.get("case_id") for item in produced]
+    missing_cases = [cid for cid in expected_cases if cid not in produced_ids]
+    bad_runs = [
+        f"{item.get('case_id')} (run 数 {len(item.get('run_assessments') or [])})"
+        for item in produced
+        if len(item.get("run_assessments") or []) != 2
+    ]
+    coverage_ok = not missing_cases and not bad_runs
+    ok = validator.returncode == 0 and coverage_ok
     # 官方校验器在 Windows 上按 GBK 输出；这里不用它的文案（避免乱码），只取退出码结论。
-    detail = (
-        "8 Case / 16 run 提交格式校验 exit 0"
-        if ok
-        else f"官方校验失败（exit {validator.returncode}）： "
-        + _decode_console(validator.stdout)[-300:]
-    )
+    if ok:
+        detail = f"{len(produced_ids)} Case / {len(produced_ids) * 2} run 格式 exit 0，覆盖完整"
+    elif not coverage_ok:
+        detail = f"覆盖不完整：缺 Case {missing_cases}；run 数异常 {bad_runs}"
+    else:
+        detail = (
+            f"官方校验失败（exit {validator.returncode}）： "
+            + _decode_console(validator.stdout)[-300:]
+        )
     return StageResult("验证集 + 官方校验", ok, detail, rows)
 
 
@@ -291,11 +331,26 @@ def stage_determinism(workdir: Path) -> StageResult:
 
 
 # ── 报告渲染 ──────────────────────────────────────────────────────────────
+def _git_head() -> str:
+    """报告绑定代码版本——没有 HEAD 的报告无法证明"这份结论对应哪份代码"。"""
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=10,
+        )
+        return proc.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
 def render_report(stages: list[StageResult], report_path: Path) -> None:
     lines: list[str] = []
     lines.append("# 确定性评测回归报告")
     lines.append("")
-    lines.append("> 由 `python scripts/verify.py` 自动生成，请勿手改。")
+    lines.append(
+        f"> 生成时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
+        f"｜ 代码版本：`{_git_head()}` ｜ 由 `python scripts/verify.py` 自动生成，请勿手改。"
+    )
     lines.append("")
     lines.append("## 1. 四阶段结论")
     lines.append("")
@@ -303,7 +358,7 @@ def render_report(stages: list[StageResult], report_path: Path) -> None:
     lines.append("|---|---|---|---|")
     for idx, stage in enumerate(stages, 1):
         mark = "✅ 通过" if stage.ok else "❌ 失败"
-        lines.append(f"| {i_dummy(idx)} | {stage.name} | {mark} | {_cell(stage.detail)} |")
+        lines.append(f"| {idx} | {stage.name} | {mark} | {_cell(stage.detail)} |")
     lines.append("")
     lines.append(
         "> ⚠️ **口径提示**：下表「布尔结论」（是否处理正确 / 是否生成发票）与 "
@@ -343,10 +398,6 @@ def render_report(stages: list[StageResult], report_path: Path) -> None:
     report_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def i_dummy(idx: int) -> str:
-    return str(idx)
-
-
 def _cell(text: str) -> str:
     return (text or "").replace("|", "\\|").replace("\n", " ")
 
@@ -379,7 +430,7 @@ def main(argv: list[str] | None = None) -> int:
 
     stages: list[StageResult] = []
     with tempfile.TemporaryDirectory(prefix="invoice-eval-verify-") as tmp:
-        workdir = Path(tmp) if not args.json else Path(tmp)
+        workdir = Path(tmp)
         if not args.skip_tests:
             stages.append(stage_tests())
         stages.append(stage_training())
