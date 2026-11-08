@@ -338,9 +338,19 @@ def _git_head() -> str:
             ["git", "rev-parse", "--short", "HEAD"],
             cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=10,
         )
-        return proc.stdout.strip() or "unknown"
+        head = proc.stdout.strip() or "unknown"
     except Exception:
         return "unknown"
+    # 🔴 2026-11-08 复核修：只报 HEAD 会掩盖"工作树有未提交改动"——
+    # 那种情况下报告其实对应「HEAD + 未提交改动」，必须显式标 dirty。
+    try:
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=10,
+        ).stdout.strip()
+    except Exception:
+        dirty = ""
+    return f"{head}-dirty" if dirty else head
 
 
 def render_report(stages: list[StageResult], report_path: Path) -> None:
