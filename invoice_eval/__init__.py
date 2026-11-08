@@ -83,6 +83,7 @@ from invoice_eval.version_report import (
     render_version_report,
     write_version_report,
 )
+from invoice_eval.webui import build_webui_data, write_webui
 
 __all__ = [
     "AmountFinding",
@@ -112,6 +113,7 @@ __all__ = [
     "build_penalties",
     "build_four_way_report",
     "build_rubric_report",
+    "build_webui_data",
     "file_sha256",
     "build_version_report",
     "audit_case",
@@ -149,4 +151,5 @@ __all__ = [
     "write_rubric_report",
     "write_analysis",
     "write_version_report",
+    "write_webui",
 ]

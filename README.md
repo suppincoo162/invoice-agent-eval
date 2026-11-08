@@ -133,6 +133,23 @@ Rubric 不修改正式 submission 或版本方向。主报告要展示 Rubric �
 --rubric-report outputs/rubric-report.jsonl
 ```
 
+离线静态 WebUI（只读，不调用 LLM 或外部网络）：
+
+```bash
+python3 -m invoice_eval webui \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --four-way-report outputs/four-way-report.json \
+  --rubric-report outputs/rubric-report.jsonl \
+  --llm-analysis outputs/four-way-llm-analysis.json \
+  --output-dir outputs/webui
+```
+
+生成后直接打开 `outputs/webui/index.html`，或运行
+`python3 -m http.server 8000 --directory outputs/webui`。页面提供 Case 搜索、
+A/B 时间线、四方对照、Rubric、事实/推断/未知和原始材料；证据栏事件可跳到
+对应时间线节点。
+
 一键回归显式追加 Rubric 第 5 阶段：
 
 ```bash
@@ -155,6 +172,6 @@ API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，�
 |---|---|
 | **所处阶段** | **`v0.3.0-dev`：确定性评测、训练/验证回归、LLM 独立盲审和四源报告生成器已完成；进入创新分析与决赛打磨** |
 | 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) · 可选 OpenAI-compatible/Ollama 盲审 |
-| 未完成 | DeepSeek 分析附录重跑 · 静态 HTML · 反事实薄切片 · 本地 V04 最终处理 · 决赛演示材料 · `v0.3.0` 最终发布包 |
-| **下一步** | 完成静态 HTML 与反事实薄切片；用当前四源输入重跑分析附录 |
+| 未完成 | DeepSeek 分析附录重跑 · 反事实薄切片 · 本地 V04 最终处理 · 决赛演示材料 · `v0.3.0` 最终发布包 |
+| **下一步** | 完成反事实薄切片；用当前四源输入重跑分析附录 |
 | 谁能动 | 任何人都可以读；**改 `main` 一律走 MR**（见 [`docs/git-workflow.md`](docs/git-workflow.md)）；`docs/00-brief/data/` 是组委会资料，**只读** |

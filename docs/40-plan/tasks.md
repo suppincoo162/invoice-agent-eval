@@ -55,6 +55,7 @@
 - [x] **T-027** 重构唯一主报告：业务结论、产品场景、研发证据分层，四源与 LLM 材料改为附录 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
 - [x] **T-031** 从结构化输入确定性生成官方七节主报告和机器摘要 —— ✅ 证据：[`invoice_eval/version_report.py`](../../invoice_eval/version_report.py)、[`tests/test_version_report.py`](../../tests/test_version_report.py)
 - [x] **T-032** 完成 Rubric 三路对抗审计并修复 P0/P1 —— ✅ 证据：[`50-deliverables/rubric-adversarial-audit-2026-11-08.md`](../50-deliverables/rubric-adversarial-audit-2026-11-08.md)、`117 passed`、`verify --with-rubric` 5/5
+- [x] **T-033** 实现离线、只读静态 WebUI：Case 导航、A/B 时间线、四方对照、Rubric、事实/推断/未知、原始材料与证据跳转 —— ✅ 证据：[`invoice_eval/webui.py`](../../invoice_eval/webui.py)、[`webui/`](../../webui/)、[`tests/test_webui.py`](../../tests/test_webui.py)、`outputs/webui/index.html`
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 ### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）

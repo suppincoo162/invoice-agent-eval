@@ -7,7 +7,7 @@
 | 检查项 | 结果 |
 |---|---|
 | 当前版本 | `v0.3.0-dev`；正式 tag 待最终冻结后创建 |
-| 单元、回归与集成测试 | **117 项通过** |
+| 单元、回归与集成测试 | **124 项通过** |
 | 训练集 CLI | 14 个 Case 输出成功 |
 | 验证集 CLI | 8 个 Case 输出成功 |
 | 训练集官方格式校验 | 14 Case / 28 run 通过 |
@@ -56,6 +56,7 @@ insufficient_evidence：0
 14. **官方主报告生成**：`version-report` 从 submission、训练参考和四源 JSON 重新计算并渲染官方七节报告，不再依赖手工填写数字。
 15. **Rubric 双轨旁路**：`impact-aware-dual-v1` 独立输出 `rubric_score`、影响封顶和五维扣分归属；默认正式 submission、方向与四阶段回归不变，`--with-rubric` 才启用第 5 阶段。
 16. **Rubric 对抗审计**：三路独立 Review 发现封顶证据、run 绑定、浮点分、Rubric 来源和默认报告侵入问题；P0/P1 已修复并记录于 [审计报告](rubric-adversarial-audit-2026-11-08.md)。
+17. **离线只读 WebUI**：`webui` 命令从既有产物生成三栏静态页面，覆盖 A/B 时间线、四方对照、Rubric、事实/推断/未知和原始材料；支持证据跳转、URL 状态和打印，全程不调用 LLM 或网络。
 
 ## 四、证据边界
 
