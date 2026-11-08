@@ -1,7 +1,9 @@
 {
   "artifact_type": "version_report_data_v1",
-  "generated_at": "2026-11-08T19:40:45+08:00",
+  "generated_at": "2026-11-08T20:43:56+08:00",
   "evaluator_version": "0.3.0-dev",
+  "code_commit": "08bc1cf",
+  "working_tree_dirty": false,
   "submission_path": "outputs/validation-v0.3.0-dev.jsonl",
   "submission_sha256": "7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe",
   "case_count": 8,
@@ -649,7 +651,9 @@
             "cap": 20,
             "evidence_event_ids": [
               "INV-V07-B-05",
-              "INV-V07-B-08"
+              "INV-V07-B-08",
+              "INV-V07-B-09",
+              "INV-V07-B-10"
             ]
           }
         ],
@@ -692,7 +696,9 @@
             "cap": 20,
             "evidence_event_ids": [
               "INV-V08-A-07",
-              "INV-V08-A-08"
+              "INV-V08-A-08",
+              "INV-V08-A-09",
+              "INV-V08-A-10"
             ]
           }
         ],
