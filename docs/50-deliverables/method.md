@@ -285,3 +285,19 @@ python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户�
 - [EIR-100 Rubric](../20-design/evidence-impact-rubric.md)：将授权风险、业务正确性、上下文、工具流程和恢复终止分维度评分，并按实际影响设置封顶。
 - [反事实信用分配](../20-design/counterfactual-attribution.md)：在复制视图中修复首因字段，分析传播消失、独立根因残留和责任对象。
 - 两者当前均为候选，不进入 `v0.3.0` 正式 `quality_score`；采用 ADR-006 的双轨校准路线。
+
+## 十八、官方主报告确定性生成
+
+```bash
+python3 -m invoice_eval version-report \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --four-way-report outputs/four-way-report.json \
+  --output-md docs/50-deliverables/version-report.md \
+  --output-json outputs/version-report-data.json
+```
+
+- 重新计算 A/B 正确率、开票率、质量分、耗时、Token、方向和硬风险数量；
+- 重新执行 14 Case / 28 run 训练参考回归；
+- 从当前 submission 选择 Bad Case 和回归项；
+- 按官方七节模板渲染主报告，四源、LLM、证据边界和复现材料放附录；
+- 不调用 LLM，所有数字和 Case 均来自结构化输入。

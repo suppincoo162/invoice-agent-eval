@@ -28,6 +28,11 @@ from invoice_eval.llm_audit import (
 )
 from invoice_eval.workflow import load_workflow
 from invoice_eval.version import __version__
+from invoice_eval.version_report import (
+    build_version_report,
+    load_jsonl_cases,
+    write_version_report,
+)
 
 
 DEFAULT_WORKFLOW_PATH = (
@@ -43,6 +48,27 @@ DEFAULT_RULES_PATH = (
     / "00-brief"
     / "data"
     / "07_数据字典与业务规则.md"
+)
+DEFAULT_TRAIN_CASES_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "docs"
+    / "00-brief"
+    / "data"
+    / "02_公开训练轨迹.jsonl"
+)
+DEFAULT_TRAIN_REFERENCE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "docs"
+    / "00-brief"
+    / "data"
+    / "03_公开训练参考标注.jsonl"
+)
+DEFAULT_VALIDATION_CASES_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "docs"
+    / "00-brief"
+    / "data"
+    / "04_无标注验证轨迹.jsonl"
 )
 
 
@@ -98,6 +124,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             model=args.model,
             base_url=args.base_url,
             timeout_seconds=args.timeout,
+        )
+    if args.command == "version-report":
+        return _version_report(
+            validation_cases_path=args.cases,
+            training_cases_path=args.training_cases,
+            training_reference_path=args.training_reference,
+            submission_path=args.submission,
+            workflow_path=args.workflow,
+            four_way_report_path=args.four_way_report,
+            markdown_output_path=args.output_md,
+            json_output_path=args.output_json,
         )
 
     parser.error(f"Unknown command: {args.command}")
@@ -191,6 +228,38 @@ def _build_parser() -> argparse.ArgumentParser:
     analysis.add_argument("--model")
     analysis.add_argument("--base-url")
     analysis.add_argument("--timeout", type=float)
+
+    report = commands.add_parser(
+        "version-report",
+        help=(
+            "Render the official A/B version report deterministically "
+            "from evaluation artifacts."
+        ),
+    )
+    report.add_argument(
+        "--cases",
+        type=Path,
+        default=DEFAULT_VALIDATION_CASES_PATH,
+    )
+    report.add_argument(
+        "--training-cases",
+        type=Path,
+        default=DEFAULT_TRAIN_CASES_PATH,
+    )
+    report.add_argument(
+        "--training-reference",
+        type=Path,
+        default=DEFAULT_TRAIN_REFERENCE_PATH,
+    )
+    report.add_argument("--submission", type=Path, required=True)
+    report.add_argument(
+        "--workflow",
+        type=Path,
+        default=DEFAULT_WORKFLOW_PATH,
+    )
+    report.add_argument("--four-way-report", type=Path)
+    report.add_argument("--output-md", type=Path, required=True)
+    report.add_argument("--output-json", type=Path)
     return parser
 
 
@@ -418,6 +487,55 @@ def _four_way_analysis(
     print(
         f"Wrote four-way LLM analysis to {json_output_path} "
         f"and {markdown_output_path} using {config.model}"
+    )
+    return 0
+
+
+def _version_report(
+    validation_cases_path: Path,
+    training_cases_path: Path,
+    training_reference_path: Path,
+    submission_path: Path,
+    workflow_path: Path,
+    four_way_report_path: Path | None,
+    markdown_output_path: Path,
+    json_output_path: Path | None,
+) -> int:
+    try:
+        validation_dataset = load_dataset(validation_cases_path)
+        training_dataset = load_dataset(training_cases_path)
+        training_reference = load_review_jsonl(
+            training_reference_path
+        )
+        submission = load_jsonl_cases(submission_path)
+        workflow = load_workflow(workflow_path)
+        four_way = (
+            json.loads(
+                four_way_report_path.read_text(encoding="utf-8")
+            )
+            if four_way_report_path is not None
+            else None
+        )
+        report = build_version_report(
+            validation_dataset=validation_dataset,
+            validation_submission=submission,
+            training_dataset=training_dataset,
+            training_reference=training_reference,
+            workflow=workflow,
+            four_way_report=four_way,
+            submission_path=str(submission_path),
+        )
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"Version report failed: {exc}")
+        return 1
+    write_version_report(
+        report,
+        markdown_path=markdown_output_path,
+        json_path=json_output_path,
+    )
+    print(
+        f"Wrote version report for {report['case_count']} case(s) "
+        f"to {markdown_output_path}"
     )
     return 0
 
