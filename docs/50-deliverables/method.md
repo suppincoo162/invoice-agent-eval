@@ -200,3 +200,65 @@ python3 -m unittest discover -s tests -v
 - 另提供 `compare-audit`，比较确定性结果与模型盲审的方向、两个布尔值、根因、首错和证据差异。
 - 首个本地试点使用 `deepseek-r1:8b`、`llm-audit-v4` 对 `INV-V03` 完成；方向、布尔值、根因标签和首错一致，但模型没有把 `B-07` 纳入根因证据，因此不能把“结构一致”混同于“证据完全一致”。
 - 当前 Prompt 为 `llm-audit-v5`，显式要求成功 run 也提供非空证据，并禁止“有根因但处理成功”的矛盾输出。
+
+## 十三、回归闭环：一条命令复跑四个阶段
+
+> 2026-11-08 加。此前四个环节各自存在但分散在四条命令里——没有入口、没有统一结论、
+> 失败也不知道坏在哪一环。现收敛为一个入口。
+
+```bash
+python scripts/verify.py                 # 全量（含 pytest）
+python scripts/verify.py --skip-tests    # 跳过 pytest，只跑评测回归
+python scripts/verify.py --report outputs/verify-report.md   # 指定报告路径
+```
+
+四阶段（任一失败 ⇒ exit 1，但**其余阶段仍跑完**，便于一次看到全部问题）：
+
+| # | 阶段 | 断言 |
+|---|---|---|
+| 1 | 单元/回归测试 | `pytest -q` 全绿（未装 pytest 时自动退化为 `unittest discover`） |
+| 2 | 训练集归因回归 | 14 Case / 28 run 的**方向、两个布尔值、根因、首错、证据**与官方参考标注逐项一致 |
+| 3 | 验证集 + 官方校验 | 8 Case / 16 run 过 `08_提交格式校验.py`（exit 0） |
+| 4 | 确定性复跑 | 同一输入连跑两遍，输出**逐字节相同**（可复现性证据） |
+
+2026-11-08 实测：`4/4 阶段通过`；运行后自动生成 `outputs/verify-report.md`（22 个 Case 的
+「布尔结论 vs 质量分」对照表，含生成时间与代码版本）。⚠️ 该文件是**运行产物**，是否纳入
+版本控制取决于 `.gitignore` 中 `outputs/` 的设置——评审机器上跑一次 `scripts/verify.py` 即可复现。
+
+> ⚠️ **口径提示**：报告把「是否处理正确 / 是否生成发票」（布尔）与「`quality_score`」
+> （100 分起扣）**分两列**呈现。两者是不同口径，不可互相替代，也不应合并成单一"成功率"。
+
+## 十五、LLM 盲审链路契约冒烟（无模型可跑）
+
+> 2026-11-08 加。评分定位里「Qwen-compatible 冒烟」是缺口；在拿到评测方模型之前，
+> **链路本身**可以先被证明。
+
+```bash
+python scripts/smoke-llm-audit.py            # 正控：合法响应 ⇒ CLI exit 0、产 1 行
+python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户端必须拒绝
+```
+
+- 起一个本地 OpenAI-compatible 桩（`/v1/chat/completions`），走**真实 CLI** 完整往返；
+- 断言：exit 0、输出 1 行合法 JSONL、`case_id`/run 数符合、请求带 `model` 且 `temperature=0`、
+  未配置 Key 时不发 `Authorization`；
+- **负控**：桩返回"成功 run 带根因"的非法结果 ⇒ 客户端拒绝（exit≠0、不产文件）。
+- **它证明**：接口契约、程序校验、密钥边界、落盘链路；**它不证明**任何模型的质量。
+- **真实模型冒烟（已完成 · 2026-11-08）**：本机 RTX 2060 6 GB / 16 GB 内存 ⇒ 选 `qwen2.5:3b`
+  （1.9 GB，Q4）；因默认上下文不足（prompt ≈ 5k tokens）曾出现「invalid first-fault event」，
+  用 `num_ctx=16384` 的模型变体后通过：`CLI exit 0`、输出 1 行、2 个 run、契约校验通过，
+  产物留档 `outputs/llm-review-INV-V03-real.jsonl`。
+  ⚠️ **诚实标注**：3B 模型处于能力边界，**3 次里约 1 次通过**（失败时客户端拒绝落盘并重试一次，
+  符合设计）；模型结论与确定性评测**不一致**（模型判 `candidate_better` + A/B 均 `AMOUNT_BASIS`，
+  确定性判 `baseline_better` + A 正确/B `FIELD_FABRICATION`）——这正是「盲审不进正式评分」的理由。
+  更强模型（7B+ / 评测方 Qwen3.8-Max）预期更稳定，但本机 6 GB 显存带 7B 会非常慢，未做。
+
+## 十四、场景扩展：流程拓扑可配置（实测）
+
+- 流程字典（`01_竞赛版流程字典.json`）是**外部数据**：步骤表、顺序、必选、合法转移、
+  事件要求全部来自 JSON；换配置**不需要改 Python**。
+- 实测：`python scripts/demo-scenario-variant.py` —— 同一批 8 个验证 Case，换成
+  “不允许追问”的变体字典（唯一差异＝采集步少一条合法转移），**2/8 个 Case 判定方向改变**
+  （`baseline_better → insufficient_evidence`）。
+- **诚实边界**：业务规则层仍绑定本赛题 15 个 `step_id`（全包实测 70 处字符串引用，含注释复核后），
+  全新领域需按域实现规则模块。逐模块耦合度、接入成本估算（按覆盖判据面 2–8 天/领域；本项目从零到 v0.2.1 实测 8.2 天）
+  与后续收敛路径见 `docs/50-deliverables/extensibility.md`。
