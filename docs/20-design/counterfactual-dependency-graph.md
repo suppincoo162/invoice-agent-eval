@@ -2,6 +2,8 @@
 
 > 状态：**候选设计，未进入 MVP**。用于检验首因、传播链和责任对象，不改写真实轨迹、不模拟 Agent 重跑，也不直接改变提交结果。进入实现的前置门槛见 [`decisions.md`](decisions.md) ADR-004。
 
+> Rubric 接入方式见 [`evidence-impact-rubric.md`](evidence-impact-rubric.md)：消失的 finding 属于传播，残留 finding 才进入独立根因和对应评分维度。
+
 ## 一、依赖图
 
 依赖图使用四类边：

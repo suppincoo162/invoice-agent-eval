@@ -2,6 +2,8 @@
 
 > 状态：**设计与边界可继续完善，代码不进入基础 MVP**。进入实现的门槛见 [`decisions.md`](decisions.md) ADR-004：先完成 T-010 训练集回归，并观察到至少两个真实的归因缺失或重复。
 
+> 评分接入候选：[证据约束与影响感知 Rubric](evidence-impact-rubric.md)。反事实分析只决定传播、独立性和责任边界，不直接修改正式布尔值或 `quality_score`。
+
 ## 动机
 
 仅按 `seq` 找“最早异常事件”容易把时间先后误当成因果，也难以回答：
@@ -14,6 +16,17 @@
 本候选把赛题要求的“首因 + 传播链”扩展为一种**证据约束的最小修复分析**，并在此基础上做对象感知的信用分配。
 
 依赖图、可修复字段和降级边界的候选细化见 [`counterfactual-dependency-graph.md`](counterfactual-dependency-graph.md)。
+
+## 主要用途
+
+| 用途 | 回答的问题 | 输出 |
+|---|---|---|
+| 首因与传播 | 修复首因后哪些 finding 消失？ | `removed_findings` / `propagated_event_ids` |
+| 根因独立性 | 修复后哪些 finding 仍存在？ | `surviving_findings` |
+| 信用分配 | 错误应由 Agent、模型、Harness、工具、用户还是外部服务承担？ | `actor` / `component` / `UNKNOWN` |
+| 修复优先级 | 哪个首因消除的下游影响最多？ | 内部排序，不生成精确贡献百分比 |
+
+“模型”和“Harness”无法从单条轨迹可靠区分时，必须输出 `MODEL_OR_HARNESS_UNKNOWN`，不得根据最终答案倒推隐藏原因。
 
 ## 核心想法
 
