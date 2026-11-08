@@ -228,6 +228,23 @@ python scripts/verify.py --report outputs/verify-report.md   # 指定报告路�
 > ⚠️ **口径提示**：报告把「是否处理正确 / 是否生成发票」（布尔）与「`quality_score`」
 > （100 分起扣）**分两列**呈现。两者是不同口径，不可互相替代，也不应合并成单一"成功率"。
 
+## 十五、LLM 盲审链路契约冒烟（无模型可跑）
+
+> 2026-11-08 加。评分定位里「Qwen-compatible 冒烟」是缺口；在拿到评测方模型之前，
+> **链路本身**可以先被证明。
+
+```bash
+python scripts/smoke-llm-audit.py            # 正控：合法响应 ⇒ CLI exit 0、产 1 行
+python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户端必须拒绝
+```
+
+- 起一个本地 OpenAI-compatible 桩（`/v1/chat/completions`），走**真实 CLI** 完整往返；
+- 断言：exit 0、输出 1 行合法 JSONL、`case_id`/run 数符合、请求带 `model` 且 `temperature=0`、
+  未配置 Key 时不发 `Authorization`；
+- **负控**：桩返回"成功 run 带根因"的非法结果 ⇒ 客户端拒绝（exit≠0、不产文件）。
+- **它证明**：接口契约、程序校验、密钥边界、落盘链路；**它不证明**任何模型的质量。
+- **真实模型冒烟仍需**：本地 Ollama 拉一个 chat 模型，或评测方/自备 API Key。
+
 ## 十四、场景扩展：流程拓扑可配置（实测）
 
 - 流程字典（`01_竞赛版流程字典.json`）是**外部数据**：步骤表、顺序、必选、合法转移、
