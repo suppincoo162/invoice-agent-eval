@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -90,9 +91,14 @@ def _run_cli(args: list[str]) -> subprocess.CompletedProcess:
 
 # ── 阶段 1：单元/回归测试 ────────────────────────────────────────────────
 def stage_tests() -> StageResult:
+    env = os.environ.copy()
+    # 评测机的全局 pytest 插件可能启动无关服务（例如 pyvirtualdisplay/Xvfb）。
+    # 本仓库测试只依赖 pytest 核心与标准库，禁用第三方插件自动加载以保证可复现。
+    env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
     proc = subprocess.run(
         [_python(), "-m", "pytest", "-q", "--no-header"],
         cwd=str(PROJECT_ROOT),
+        env=env,
         capture_output=True,
         text=True,
         encoding="utf-8",

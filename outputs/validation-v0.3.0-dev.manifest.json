@@ -1,0 +1,16 @@
+{
+  "artifact_type": "validation_submission_manifest_v1",
+  "evaluator_version": "v0.3.0-dev",
+  "base_commit": "8960a6c79fa1e65a3c14104d47f986cce4ceadd1",
+  "working_tree": true,
+  "generated_at": "2026-11-08",
+  "dataset": "docs/00-brief/data/04_无标注验证轨迹.jsonl",
+  "dataset_version": "student-1.0",
+  "submission": "outputs/validation-v0.3.0-dev.jsonl",
+  "sha256": "7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe",
+  "case_count": 8,
+  "run_count": 16,
+  "command": "python3 -m invoice_eval evaluate --cases docs/00-brief/data/04_无标注验证轨迹.jsonl --output outputs/validation-v0.3.0-dev.jsonl",
+  "official_format_validator": "passed",
+  "note": "validation-current.jsonl is the latest convenience alias; this versioned file is the canonical report snapshot."
+}

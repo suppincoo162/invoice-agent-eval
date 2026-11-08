@@ -1,7 +1,7 @@
 # 任务拆分
 
 > **本文件是「现在在推什么」的唯一主位置。**
-> 当前阶段＝**确定性评测、证据完整性修复与训练/验证集回归已完成；下一步交付与可选的模型增强**（as of 2026-11-07）。
+> 当前阶段＝**`v0.3.0-dev`：确定性评测、证据完整性修复与训练/验证集回归已完成；下一步完成四方对照和 `v0.3.0` 交付**（as of 2026-11-08）。
 > 完成的判定**必须有证据指针**（文档 / commit / 命令输出），不靠记忆。
 
 ## 阶段 A · 备料（事实层）—— ✅ 已完成 2026-10-31
@@ -49,6 +49,10 @@
 - [x] **T-010** 用训练集回归，对比参考标注 —— ✅ 证据：[`tests/test_training_regression.py`](../../tests/test_training_regression.py)（14 Case / 28 run 的布尔、根因、首错、证据和方向全部一致）
 - [x] **T-011** 跑验证集，过格式校验 —— ✅ 证据：[`tests/test_validation_regression.py`](../../tests/test_validation_regression.py)（8 Case / 16 run，场景方向一致且通过官方校验）
 - [x] **T-023** 强化 LLM 盲审契约：成功 run 也必须保留非空证据，有根因时不得标记处理成功 —— ✅ 证据：[`invoice_eval/llm_audit.py`](../../invoice_eval/llm_audit.py)、[`tests/test_llm_audit.py`](../../tests/test_llm_audit.py)、Prompt `llm-audit-v5`
+- [x] **T-024** 统一版本语义：正式发布目标 `v0.3.0`，当前开发标识 `v0.3.0-dev`，Prompt 与人工初审快照独立标识 —— ✅ 证据：[`invoice_eval/version.py`](../../invoice_eval/version.py)、ADR-005、[`50-deliverables/method.md`](../50-deliverables/method.md)
+- [x] **T-025** 实现确定性四源报告生成器，区分核心诊断分歧与证据范围差异 —— ✅ 证据：[`invoice_eval/four_way.py`](../../invoice_eval/four_way.py)、[`tests/test_four_way.py`](../../tests/test_four_way.py)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
+- [x] **T-026** 实现可选四源 LLM 分析层，强制区分事实、推断、未知并校验事件锚点 —— ✅ 证据：[`invoice_eval/four_way_analysis.py`](../../invoice_eval/four_way_analysis.py)、[`tests/test_four_way_analysis.py`](../../tests/test_four_way_analysis.py)、Prompt `four-way-analysis-v1`
+- [x] **T-027** 重构唯一主报告：业务结论、产品场景、研发证据分层，四源与 LLM 材料改为附录 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 ### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）
@@ -68,4 +72,7 @@
 
 ## 后续候选（未排期，不影响当前 MVP）
 
+- [x] **T-028** 固化 EIR-100 Rubric 候选设计：五维评分、影响封顶、证据置信度分离 —— ✅ 证据：[`20-design/evidence-impact-rubric.md`](../20-design/evidence-impact-rubric.md)、ADR-006
+- [ ] **T-029** 实现 Rubric 双轨输出并完成 28+16 校准 —— 验收：正式方向不变；`rubric_score` 可由维度和证据解释；封顶与传播去重有测试
+- [ ] **T-030** 实现反事实最小修复薄切片 —— 验收：金额、上下文、提交漂移、批量明细四类；仅内部视图；无法修复时明确降级
 - [ ] **T-021** 评估是否试点反事实最小修复与对象感知信用分配 —— 前置：T-010 完成，且训练集出现至少两个真实归因缺失或重复；即使试点也只能影响内部归因与 `downstream_impact`，不得改变 schema、布尔结论或评分规则。设计与门槛见 [`20-design/counterfactual-attribution.md`](../20-design/counterfactual-attribution.md)、[`20-design/decisions.md`](../20-design/decisions.md) ADR-004

@@ -1,4 +1,6 @@
+import contextlib
 import dataclasses
+import io
 import json
 import subprocess
 import sys
@@ -150,6 +152,15 @@ class EvaluatorTests(unittest.TestCase):
                 checked.stdout + checked.stderr,
             )
             self.assertIn("格式检查通过", checked.stdout)
+
+    def test_cli_version_uses_unified_evaluator_version(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            with self.assertRaises(SystemExit) as raised:
+                main(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertEqual(output.getvalue().strip(), "invoice-eval 0.3.0-dev")
 
 
 if __name__ == "__main__":

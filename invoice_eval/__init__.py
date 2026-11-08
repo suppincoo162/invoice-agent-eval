@@ -13,6 +13,21 @@ from invoice_eval.entities import (
     find_product_root_causes,
 )
 from invoice_eval.evaluator import AssessedRun, evaluate_case
+from invoice_eval.four_way import (
+    build_four_way_report,
+    load_local_manifest_statuses,
+    load_review_jsonl,
+    render_four_way_markdown,
+    write_four_way_report,
+)
+from invoice_eval.four_way_analysis import (
+    FOUR_WAY_ANALYSIS_PROMPT_VERSION,
+    analyze_four_way_report,
+    build_analysis_prompts,
+    render_analysis_markdown,
+    validate_analysis,
+    write_analysis,
+)
 from invoice_eval.invoice_types import (
     find_batch_root_causes,
     find_red_invoice_root_causes,
@@ -53,6 +68,7 @@ from invoice_eval.workflow import (
     find_workflow_transition_findings,
     load_workflow,
 )
+from invoice_eval.version import __version__
 
 __all__ = [
     "AmountFinding",
@@ -61,6 +77,7 @@ __all__ = [
     "Dataset",
     "DatasetFormatError",
     "Event",
+    "FOUR_WAY_ANALYSIS_PROMPT_VERSION",
     "LLMConfig",
     "LLMConfigError",
     "LLMRequestError",
@@ -73,11 +90,15 @@ __all__ = [
     "Workflow",
     "WorkflowFinding",
     "WorkflowFormatError",
+    "__version__",
     "calculate_amounts",
     "calculate_quality_score",
     "compare_audits",
     "build_penalties",
+    "build_four_way_report",
     "audit_case",
+    "analyze_four_way_report",
+    "build_analysis_prompts",
     "evaluate_case",
     "find_amount_findings",
     "find_batch_root_causes",
@@ -95,6 +116,13 @@ __all__ = [
     "find_task_type_root_causes",
     "find_workflow_transition_findings",
     "load_dataset",
+    "load_local_manifest_statuses",
+    "load_review_jsonl",
     "load_workflow",
+    "render_four_way_markdown",
+    "render_analysis_markdown",
+    "validate_analysis",
     "validate_review",
+    "write_four_way_report",
+    "write_analysis",
 ]

@@ -11,6 +11,7 @@ from typing import Any, Mapping, Protocol
 
 from invoice_eval.models import Case
 from invoice_eval.scoring import PENALTY_POINTS
+from invoice_eval.version import __version__
 
 
 PROMPT_VERSION = "llm-audit-v5"
@@ -127,6 +128,17 @@ class OpenAICompatibleClient:
             previous_review=previous_review,
             validation_error=validation_error,
         )
+        return self.complete_json(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        )
+
+    def complete_json(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> dict[str, Any]:
         body = {
             "model": self.config.model,
             "messages": [
@@ -302,6 +314,7 @@ def audit_case(
 
     return {
         "artifact_type": "llm_review_v1",
+        "evaluator_version": __version__,
         "case_id": case.case_id,
         "provider": "openai-compatible",
         "model": client.model,
