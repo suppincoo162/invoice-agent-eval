@@ -39,6 +39,7 @@ from invoice_eval.version_report import (
     load_jsonl_cases,
     write_version_report,
 )
+from invoice_eval.webui import build_webui_data, write_webui
 
 
 DEFAULT_WORKFLOW_PATH = (
@@ -148,6 +149,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             cases_path=args.cases,
             submission_path=args.submission,
             output_path=args.output,
+        )
+    if args.command == "webui":
+        return _webui(
+            cases_path=args.cases,
+            submission_path=args.submission,
+            four_way_report_path=args.four_way_report,
+            rubric_report_path=args.rubric_report,
+            llm_analysis_path=args.llm_analysis,
+            output_dir=args.output_dir,
         )
 
     parser.error(f"Unknown command: {args.command}")
@@ -285,6 +295,20 @@ def _build_parser() -> argparse.ArgumentParser:
     rubric.add_argument("--cases", type=Path, required=True)
     rubric.add_argument("--submission", type=Path, required=True)
     rubric.add_argument("--output", type=Path, required=True)
+
+    webui = commands.add_parser(
+        "webui",
+        help=(
+            "Generate an offline, read-only HTML evidence explorer from "
+            "existing evaluation artifacts."
+        ),
+    )
+    webui.add_argument("--cases", type=Path, required=True)
+    webui.add_argument("--submission", type=Path, required=True)
+    webui.add_argument("--four-way-report", type=Path, required=True)
+    webui.add_argument("--rubric-report", type=Path, required=True)
+    webui.add_argument("--llm-analysis", type=Path)
+    webui.add_argument("--output-dir", type=Path, required=True)
     return parser
 
 
@@ -593,6 +617,56 @@ def _rubric_report(
         f"Wrote Rubric report for {len(rows)} case(s) / "
         f"{sum(len(row['run_assessments']) for row in rows)} runs "
         f"to {output_path}"
+    )
+    return 0
+
+
+def _webui(
+    cases_path: Path,
+    submission_path: Path,
+    four_way_report_path: Path,
+    rubric_report_path: Path,
+    llm_analysis_path: Path | None,
+    output_dir: Path,
+) -> int:
+    try:
+        dataset = load_dataset(cases_path)
+        submission = load_jsonl_cases(submission_path)
+        four_way_report = json.loads(
+            four_way_report_path.read_text(encoding="utf-8")
+        )
+        rubric_report = load_rubric_report(rubric_report_path)
+        llm_analysis = (
+            json.loads(llm_analysis_path.read_text(encoding="utf-8"))
+            if llm_analysis_path is not None
+            else None
+        )
+        data = build_webui_data(
+            dataset=dataset,
+            submission=submission,
+            four_way_report=four_way_report,
+            rubric_report=rubric_report,
+            llm_analysis=llm_analysis,
+            submission_path=submission_path,
+            source_paths={
+                "cases": str(cases_path),
+                "submission": str(submission_path),
+                "four_way_report": str(four_way_report_path),
+                "rubric_report": str(rubric_report_path),
+                "llm_analysis": (
+                    str(llm_analysis_path)
+                    if llm_analysis_path is not None
+                    else ""
+                ),
+            },
+        )
+        write_webui(data, output_dir)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"WebUI generation failed: {exc}")
+        return 1
+    print(
+        f"Wrote offline WebUI for {data['metadata']['case_count']} case(s) "
+        f"/ {data['metadata']['run_count']} runs to {output_dir}"
     )
     return 0
 

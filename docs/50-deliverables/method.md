@@ -286,6 +286,28 @@ python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户�
 - [反事实信用分配](../20-design/counterfactual-attribution.md)：在复制视图中修复首因字段，分析传播消失、独立根因残留和责任对象。
 - 两者当前均为候选，不进入 `v0.3.0` 正式 `quality_score`；采用 ADR-006 的双轨校准路线。
 
+## 十八、离线只读 WebUI
+
+`webui` 子命令只读取既有 Case、正式 submission、四源报告、Rubric 和可选 LLM
+分析，生成独立目录：
+
+```bash
+python3 -m invoice_eval webui \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --four-way-report outputs/four-way-report.json \
+  --rubric-report outputs/rubric-report.jsonl \
+  --llm-analysis outputs/four-way-llm-analysis.json \
+  --output-dir outputs/webui
+```
+
+页面使用原生 HTML/CSS/JavaScript，无 CDN、后端服务或网络请求，可直接打开
+`outputs/webui/index.html`。三栏分别承载 Case 导航、主分析视图和证据检查器；
+支持 URL 状态 `#case=INV-V07&tab=timeline`、事件跳转、打印和移动端布局。
+
+WebUI 不重新评测、不调用 LLM、不修改正式 submission。Rubric 文件必须与输入
+submission 的 SHA256 一致；本地 V04 的契约拒绝作为来源事实保留，不补造结果。
+
 ## 十八、官方主报告确定性生成
 
 ```bash
