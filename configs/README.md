@@ -6,7 +6,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `workflow-variant-strict-no-supplement.json` | 场景变体：**不允许向用户追问补充信息**的自助开票流程。与竞赛版 15 步完全相同，唯一差异是 `COLLECT_INVOICE_DATA` 的合法转移少了 `WAIT_USER_SUPPLEMENT` 一条。 |
+| `workflow-variant-strict-no-supplement.json` | 场景变体：**不允许向用户追问补充信息**的自助开票流程。与竞赛版 15 步完全相同；**行为差异仅一处**——`COLLECT_INVOICE_DATA` 的合法转移少了 `WAIT_USER_SUPPLEMENT`（另有两处元数据改动：`workflow_id`、`notice`）。 |
 
 ## 怎么验证它是真的配置驱动
 

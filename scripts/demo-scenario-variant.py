@@ -20,7 +20,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -103,8 +102,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print("-" * 78)
     print(f"  结论：{changed}/{len(dataset.cases)} 个 Case 的判定随配置改变")
-    print("  证据：两份流程字典的差异仅在 COLLECT_INVOICE_DATA 的合法转移上（少了"
-          " WAIT_USER_SUPPLEMENT 一条），Python 代码零改动。")
+    print("  证据：两份字典的**行为差异**仅在 COLLECT_INVOICE_DATA 的合法转移（少了"
+          " WAIT_USER_SUPPLEMENT 一条）；另有两处元数据改动（workflow_id / notice），"
+          "Python 代码零改动。")
     print("  说明：变体下 A 的追问路径被禁用 ⇒ A 判不成立。官方根因标签白名单没有"
           "「流程违规」标签，")
     print("        故按既有映射归入 INSUFFICIENT_EVIDENCE——这是既有设计，不是本次新增逻辑。")

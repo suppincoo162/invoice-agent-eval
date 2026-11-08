@@ -29,7 +29,7 @@ INV-V03  baseline_better → insufficient_evidence   A/B 分 100/50 → 0/50  �
 结论：2/8 个 Case 的判定随配置改变
 ```
 
-两份字典的差异**只有一行转移**（`COLLECT_INVOICE_DATA` 的合法后继少一个），Python 代码零改动。
+两份字典的**行为差异只有一行转移**（`COLLECT_INVOICE_DATA` 的合法后继少一个；另有两处元数据改动 `workflow_id` / `notice`），Python 代码零改动。
 
 > [!NOTE]
 > **为什么变体下 A 被判「证据不足」而不是「流程违规」**：A 的轨迹正是通过 `WAIT_USER_SUPPLEMENT` 完成追问的；变体把这条转移判为非法后，A 的处理路径在该场景下不成立。官方根因标签白名单**没有**"流程违规"这一标签，因此按既有设计归入 `INSUFFICIENT_EVIDENCE`（无法归因到更具体标签）。这是本评测器既有的标签映射，不是本次新增逻辑。
