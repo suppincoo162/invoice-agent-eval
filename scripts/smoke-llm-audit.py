@@ -198,16 +198,102 @@ def _make_handler(capture: _Capture, case_id: str, model_id: str, invalid: bool 
     return Handler
 
 
+def _run_real(args) -> int:
+    """对真实端点跑一次完整盲审；只断言「链路/契约/落盘」，不评模型质量。"""
+    import time
+
+    case_id = args.case_id
+    with tempfile.TemporaryDirectory(prefix="real-llm-") as tmp:
+        out = Path(tmp) / "llm-review.jsonl"
+        env = dict(os.environ)
+        env.setdefault("INVOICE_EVAL_LLM_MODEL", args.model)
+        env["INVOICE_EVAL_LLM_BASE_URL"] = args.base_url
+        env["INVOICE_EVAL_LLM_TIMEOUT"] = str(args.timeout)
+
+        print("=" * 70)
+        print("LLM 盲审 · 真实端点冒烟（OpenAI-compatible）")
+        print("=" * 70)
+        print(f"  端点 : {args.base_url}")
+        print(f"  模型 : {env.get('INVOICE_EVAL_LLM_MODEL')}")
+        print(f"  Case : {case_id}")
+        started = time.time()
+        proc = subprocess.run(
+            [
+                sys.executable, "-m", "invoice_eval", "audit",
+                "--cases", str(VALID_CASES),
+                "--output", str(out),
+                "--workflow", str(WORKFLOW),
+                "--rules", str(RULES),
+                "--case-id", case_id,
+                "--timeout", str(args.timeout),
+            ],
+            cwd=str(PROJECT_ROOT),
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        elapsed = time.time() - started
+        print(f"  耗时 : {elapsed:.1f}s")
+        print(f"  CLI  : exit {proc.returncode}")
+        if proc.stdout.strip():
+            print(f"  stdout: {proc.stdout.strip()[-300:]}")
+
+        ok = proc.returncode == 0 and out.exists()
+        if out.exists():
+            lines = [ln for ln in out.read_text(encoding="utf-8").splitlines() if ln.strip()]
+            try:
+                review = json.loads(lines[0]) if lines else {}
+            except json.JSONDecodeError:
+                review = {}
+            runs = review.get("run_assessments") or []
+            print(f"  输出 : {len(lines)} 行 / case_id={review.get('case_id')} / run={len(runs)}")
+            ok = ok and len(lines) == 1 and review.get("case_id") == case_id and len(runs) == 2
+            if runs:
+                for ra in runs:
+                    print(f"    {ra.get('run_id')}: success={ra.get('agent_task_success')} "
+                          f"invoice={ra.get('business_invoice_created')} "
+                          f"roots={[r.get('label') for r in (ra.get('root_causes') or [])]}")
+                print(f"  version_comparison: {(review.get('version_comparison') or {}).get('direction')}")
+        else:
+            print("  输出 : 未生成（模型输出未通过契约校验 ⇒ 客户端拒绝落盘）")
+
+        print("-" * 70)
+        print(f"  结论：{'✅ 真实端点链路通过' if ok else '❌ 未通过（见上）'}")
+        print("  边界：只证明链路与契约；模型判断质量需人工复核。")
+        if ok:
+            keep = PROJECT_ROOT / "outputs" / f"llm-review-{case_id}-real.jsonl"
+            keep.parent.mkdir(parents=True, exist_ok=True)
+            keep.write_bytes(out.read_bytes())
+            print(f"  已留档：{keep.relative_to(PROJECT_ROOT)}")
+        return 0 if ok else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="LLM 盲审链路契约冒烟（无模型）")
     parser.add_argument("--case-id", default="INV-V03")
+    parser.add_argument("--timeout", type=int, default=180, help="--real 模式的请求超时秒数")
     parser.add_argument("--model", default="stub-qwen-compatible")
+    parser.add_argument(
+        "--real",
+        action="store_true",
+        help="对真实 OpenAI-compatible 端点跑（默认读 --base-url / 环境变量）",
+    )
+    parser.add_argument(
+        "--base-url",
+        default="http://127.0.0.1:11434/v1",
+        help="--real 模式的目标端点（默认本地 Ollama）",
+    )
     parser.add_argument(
         "--negative",
         action="store_true",
         help="负控：桩返回非法响应，断言客户端拒绝（exit≠0 且不产文件）",
     )
     args = parser.parse_args(argv)
+
+    if args.real:
+        return _run_real(args)
 
     capture = _Capture()
     server = ThreadingHTTPServer(

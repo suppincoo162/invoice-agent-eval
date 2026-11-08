@@ -243,7 +243,14 @@ python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户�
   未配置 Key 时不发 `Authorization`；
 - **负控**：桩返回"成功 run 带根因"的非法结果 ⇒ 客户端拒绝（exit≠0、不产文件）。
 - **它证明**：接口契约、程序校验、密钥边界、落盘链路；**它不证明**任何模型的质量。
-- **真实模型冒烟仍需**：本地 Ollama 拉一个 chat 模型，或评测方/自备 API Key。
+- **真实模型冒烟（已完成 · 2026-11-08）**：本机 RTX 2060 6 GB / 16 GB 内存 ⇒ 选 `qwen2.5:3b`
+  （1.9 GB，Q4）；因默认上下文不足（prompt ≈ 5k tokens）曾出现「invalid first-fault event」，
+  用 `num_ctx=16384` 的模型变体后通过：`CLI exit 0`、输出 1 行、2 个 run、契约校验通过，
+  产物留档 `outputs/llm-review-INV-V03-real.jsonl`。
+  ⚠️ **诚实标注**：3B 模型处于能力边界，**3 次里约 1 次通过**（失败时客户端拒绝落盘并重试一次，
+  符合设计）；模型结论与确定性评测**不一致**（模型判 `candidate_better` + A/B 均 `AMOUNT_BASIS`，
+  确定性判 `baseline_better` + A 正确/B `FIELD_FABRICATION`）——这正是「盲审不进正式评分」的理由。
+  更强模型（7B+ / 评测方 Qwen3.8-Max）预期更稳定，但本机 6 GB 显存带 7B 会非常慢，未做。
 
 ## 十四、场景扩展：流程拓扑可配置（实测）
 
