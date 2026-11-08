@@ -53,6 +53,7 @@
 - [x] **T-025** 实现确定性四源报告生成器，区分核心诊断分歧与证据范围差异 —— ✅ 证据：[`invoice_eval/four_way.py`](../../invoice_eval/four_way.py)、[`tests/test_four_way.py`](../../tests/test_four_way.py)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
 - [x] **T-026** 实现可选四源 LLM 分析层，强制区分事实、推断、未知并校验事件锚点 —— ✅ 证据：[`invoice_eval/four_way_analysis.py`](../../invoice_eval/four_way_analysis.py)、[`tests/test_four_way_analysis.py`](../../tests/test_four_way_analysis.py)、Prompt `four-way-analysis-v1`
 - [x] **T-027** 重构唯一主报告：业务结论、产品场景、研发证据分层，四源与 LLM 材料改为附录 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
+- [x] **T-031** 从结构化输入确定性生成官方七节主报告和机器摘要 —— ✅ 证据：[`invoice_eval/version_report.py`](../../invoice_eval/version_report.py)、[`tests/test_version_report.py`](../../tests/test_version_report.py)
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 ### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）
