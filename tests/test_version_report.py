@@ -5,6 +5,7 @@ from pathlib import Path
 
 from invoice_eval import evaluate_case, load_dataset, load_workflow
 from invoice_eval.four_way import load_review_jsonl
+from invoice_eval.rubric import build_rubric_report
 from invoice_eval.version_report import (
     build_version_report,
     render_version_report,
@@ -107,6 +108,47 @@ class VersionReportTests(unittest.TestCase):
         self.assertEqual(
             summary["artifact_type"],
             "version_report_data_v1",
+        )
+
+    def test_rubric_is_opt_in_appendix_only(self) -> None:
+        base = build_version_report(
+            validation_dataset=self.validation,
+            validation_submission=self.submission,
+            training_dataset=self.training,
+            training_reference=self.training_reference,
+            workflow=self.workflow,
+        )
+        rubric_rows = build_rubric_report(
+            self.validation,
+            self.submission,
+        )
+        rubric_map = {row["case_id"]: row for row in rubric_rows}
+        with_rubric = build_version_report(
+            validation_dataset=self.validation,
+            validation_submission=self.submission,
+            training_dataset=self.training,
+            training_reference=self.training_reference,
+            workflow=self.workflow,
+            rubric_report=rubric_map,
+        )
+
+        self.assertNotIn("rubric", base)
+        self.assertTrue(base["code_commit"])
+        self.assertIn("代码提交标识", render_version_report(base))
+        self.assertNotIn(
+            "## 附录 E：Rubric 双轨对照",
+            render_version_report(base),
+        )
+        self.assertNotIn(
+            "rubric-report",
+            render_version_report(base).lower(),
+        )
+        self.assertIn("rubric", with_rubric)
+        self.assertEqual(with_rubric["rubric"]["changed_run_count"], 2)
+        self.assertEqual(with_rubric["rubric"]["capped_run_count"], 2)
+        self.assertIn(
+            "## 附录 E：Rubric 双轨对照",
+            render_version_report(with_rubric),
         )
 
 

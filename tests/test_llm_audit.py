@@ -72,6 +72,7 @@ class LLMAuditTests(unittest.TestCase):
             os.environ,
             {
                 "INVOICE_EVAL_LLM_MODEL": "qwen-test",
+                "INVOICE_EVAL_LLM_BASE_URL": DEFAULT_OLLAMA_BASE_URL,
                 "INVOICE_EVAL_LLM_API_KEY": secret,
             },
             clear=False,

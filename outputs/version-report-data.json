@@ -1,0 +1,760 @@
+{
+  "artifact_type": "version_report_data_v1",
+  "generated_at": "2026-11-08T20:43:56+08:00",
+  "evaluator_version": "0.3.0-dev",
+  "code_commit": "08bc1cf",
+  "working_tree_dirty": false,
+  "submission_path": "outputs/validation-v0.3.0-dev.jsonl",
+  "submission_sha256": "7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe",
+  "case_count": 8,
+  "run_count": 16,
+  "training_regression": {
+    "case_count": 14,
+    "run_count": 28,
+    "consistent": true,
+    "mismatches": []
+  },
+  "metrics": {
+    "baseline": {
+      "total": 8,
+      "success_count": 5,
+      "invoice_count": 3,
+      "hard_control_count": 1,
+      "wrong_invoice_count": 1,
+      "insufficient_evidence_count": 0,
+      "average_quality": 86.25,
+      "average_latency_ms": 933.375,
+      "average_tokens": 885.125
+    },
+    "candidate": {
+      "total": 8,
+      "success_count": 4,
+      "invoice_count": 3,
+      "hard_control_count": 1,
+      "wrong_invoice_count": 1,
+      "insufficient_evidence_count": 0,
+      "average_quality": 82.5,
+      "average_latency_ms": 1030.0,
+      "average_tokens": 913.875
+    }
+  },
+  "directions": {
+    "baseline_better": 4,
+    "candidate_better": 3,
+    "equal": 1,
+    "insufficient_evidence": 0
+  },
+  "cases": [
+    {
+      "case_id": "INV-V01",
+      "direction": "baseline_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": true,
+      "candidate_success": false,
+      "baseline_roots": [],
+      "candidate_roots": [
+        "AMOUNT_BASIS"
+      ]
+    },
+    {
+      "case_id": "INV-V02",
+      "direction": "candidate_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": false,
+      "candidate_success": true,
+      "baseline_roots": [
+        "DUPLICATE_CONTROL"
+      ],
+      "candidate_roots": []
+    },
+    {
+      "case_id": "INV-V03",
+      "direction": "baseline_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": true,
+      "candidate_success": false,
+      "baseline_roots": [],
+      "candidate_roots": [
+        "FIELD_FABRICATION"
+      ]
+    },
+    {
+      "case_id": "INV-V04",
+      "direction": "candidate_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": false,
+      "candidate_success": true,
+      "baseline_roots": [
+        "CONTEXT_UPDATE"
+      ],
+      "candidate_roots": []
+    },
+    {
+      "case_id": "INV-V05",
+      "direction": "baseline_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": true,
+      "candidate_success": false,
+      "baseline_roots": [],
+      "candidate_roots": [
+        "MULTI_ITEM_OMISSION"
+      ]
+    },
+    {
+      "case_id": "INV-V06",
+      "direction": "equal",
+      "reason": "两个版本在本 Case 的处理正确性和质量分相同。",
+      "baseline_success": true,
+      "candidate_success": true,
+      "baseline_roots": [],
+      "candidate_roots": []
+    },
+    {
+      "case_id": "INV-V07",
+      "direction": "baseline_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": true,
+      "candidate_success": false,
+      "baseline_roots": [],
+      "candidate_roots": [
+        "AMOUNT_CALCULATION"
+      ]
+    },
+    {
+      "case_id": "INV-V08",
+      "direction": "candidate_better",
+      "reason": "两个版本的处理正确性不同；该结论仅适用于当前 Case，不能外推为整体版本结论。",
+      "baseline_success": false,
+      "candidate_success": true,
+      "baseline_roots": [
+        "TOOL_ARGUMENT_ERROR"
+      ],
+      "candidate_roots": []
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "金额口径、计算与多轮更新",
+      "case_count": 3,
+      "baseline_correct": 2,
+      "candidate_correct": 1,
+      "change": "B 使用最新金额，但新增口径自拟和含税计算错误",
+      "cases": [
+        "INV-V01",
+        "INV-V04",
+        "INV-V07"
+      ]
+    },
+    {
+      "name": "红票与字段缺失",
+      "case_count": 1,
+      "baseline_correct": 1,
+      "candidate_correct": 0,
+      "change": "B 在缺金额和原票时编造金额并继续预览",
+      "cases": [
+        "INV-V03"
+      ]
+    },
+    {
+      "name": "确认、重复与风险控制",
+      "case_count": 1,
+      "baseline_correct": 0,
+      "candidate_correct": 1,
+      "change": "B 正确保留重复风险并阻断",
+      "cases": [
+        "INV-V02"
+      ]
+    },
+    {
+      "name": "工具参数与异常处理",
+      "case_count": 1,
+      "baseline_correct": 0,
+      "candidate_correct": 1,
+      "change": "B 保证预览与提交参数一致",
+      "cases": [
+        "INV-V08"
+      ]
+    },
+    {
+      "name": "批量、正常流程及其他",
+      "case_count": 2,
+      "baseline_correct": 2,
+      "candidate_correct": 1,
+      "change": "B 在批量任务中未保留完整明细",
+      "cases": [
+        "INV-V05",
+        "INV-V06"
+      ]
+    }
+  ],
+  "bad_cases": [
+    {
+      "run_id": "INV-V07-B",
+      "expected_goal": "BLUE；CUST-207；ITEM-006；1000.0/60.0/1060.0",
+      "first_fault": "`INV-V07-B-05`：金额计算不一致：tax_amount 应为 60.00，实际为 66.00, inclusive_amount 应为 1060.00，实际为 1066.00。",
+      "propagation": "INV-V07-B-08",
+      "tool_behavior": "服务接受参数，未发生保护性拦截",
+      "evidence_event_ids": [
+        "INV-V07-B-05",
+        "INV-V07-B-08"
+      ],
+      "root_and_confidence": "`AMOUNT_CALCULATION`；高（首错和证据完整）"
+    },
+    {
+      "run_id": "INV-V08-A",
+      "expected_goal": "BLUE；CUST-208；ITEM-006；3500.0/210.0/3710.0",
+      "first_fault": "`INV-V08-A-08`：正式提交参数与已确认预览不一致：amounts。",
+      "propagation": "INV-V08-A-07",
+      "tool_behavior": "服务接受参数，未发生保护性拦截",
+      "evidence_event_ids": [
+        "INV-V08-A-07",
+        "INV-V08-A-08"
+      ],
+      "root_and_confidence": "`TOOL_ARGUMENT_ERROR`；高（首错和证据完整）"
+    },
+    {
+      "run_id": "INV-V03-B",
+      "expected_goal": "ASK_ORIGINAL_INVOICE_AND_AMOUNT",
+      "first_fault": "`INV-V03-B-05`：题内未提供金额，Agent 自行填入 100000.00，属编造而非追问。 红票所需原票编号缺失，Agent 未请求补充而继续生成开票内容。",
+      "propagation": "INV-V03-B-07",
+      "tool_behavior": "未观测到工具保护性拒绝",
+      "evidence_event_ids": [
+        "INV-V03-B-05",
+        "INV-V03-B-07"
+      ],
+      "root_and_confidence": "`FIELD_FABRICATION`；高（首错和证据完整）"
+    },
+    {
+      "run_id": "INV-V05-B",
+      "expected_goal": "BATCH；CUST-205；ITEM-006；6000.0/360.0/6360.0",
+      "first_fault": "`INV-V05-B-05`：批量任务的 line_items 或 line_count 与题内要求不一致。",
+      "propagation": "INV-V05-B-07",
+      "tool_behavior": "未观测到工具保护性拒绝",
+      "evidence_event_ids": [
+        "INV-V05-B-05",
+        "INV-V05-B-07"
+      ],
+      "root_and_confidence": "`MULTI_ITEM_OMISSION`；高（首错和证据完整）"
+    }
+  ],
+  "improvements": [
+    {
+      "label": "AMOUNT_CALCULATION",
+      "repair_location": "提交前金额复算与预览复制",
+      "regression_cases": "V07、T13、T14",
+      "expected_behavior": "提交参数与确认预览完全一致"
+    },
+    {
+      "label": "TOOL_ARGUMENT_ERROR",
+      "repair_location": "参数复制与逐字段比较",
+      "regression_cases": "V08、T14",
+      "expected_behavior": "所有提交字段与确认预览一致"
+    },
+    {
+      "label": "FIELD_FABRICATION",
+      "repair_location": "采集与原票字段校验",
+      "regression_cases": "V03、T03",
+      "expected_behavior": "缺金额/原票时请求补充，不进入正常预览"
+    },
+    {
+      "label": "MULTI_ITEM_OMISSION",
+      "repair_location": "`line_items` 构造与预览",
+      "regression_cases": "V05、T07",
+      "expected_behavior": "明细多重集合和数量完整"
+    },
+    {
+      "label": "DUPLICATE_CONTROL",
+      "repair_location": "工具结果采用与提交门禁",
+      "regression_cases": "V02、T05",
+      "expected_behavior": "风险结果保留并阻断"
+    },
+    {
+      "label": "CONTEXT_UPDATE",
+      "repair_location": "上下文合并",
+      "regression_cases": "V04",
+      "expected_behavior": "使用最新有效金额"
+    }
+  ],
+  "release_recommendation": {
+    "action": "investigate",
+    "reason": "候选退化数多于提升数，且验证集没有官方逐 run 标签；应先修复高风险退化再复测。",
+    "blocking_risks": [
+      "基线存在错误金额实际开票",
+      "候选版存在错误金额实际开票"
+    ]
+  },
+  "four_way": {
+    "case_count": 8,
+    "coverage": "确定性 8；独立复核 8；本地 LLM 7；云端 LLM 8",
+    "deterministic_independent": "8/8 (100.0%)",
+    "deterministic_cloud": "8/8 (100.0%)",
+    "local_coverage": "7/8"
+  },
+  "rubric": {
+    "rubric_version": "impact-aware-dual-v1",
+    "run_count": 16,
+    "average_quality_score": 84.375,
+    "average_rubric_score": 78.125,
+    "changed_run_count": 2,
+    "capped_run_count": 2,
+    "runs": [
+      {
+        "run_id": "INV-V01-A",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V01-A-05",
+          "INV-V01-A-06"
+        ]
+      },
+      {
+        "run_id": "INV-V01-B",
+        "quality_score": 70,
+        "rubric_score": 70,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 30,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "AMOUNT_BASIS",
+            "first_fault_event_id": "INV-V01-B-05",
+            "dimension": "business_correctness",
+            "points_deducted": 30,
+            "evidence_event_ids": [
+              "INV-V01-B-05",
+              "INV-V01-B-07"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V01-B-05",
+          "INV-V01-B-07"
+        ]
+      },
+      {
+        "run_id": "INV-V02-A",
+        "quality_score": 50,
+        "rubric_score": 50,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 50,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "DUPLICATE_CONTROL",
+            "first_fault_event_id": "INV-V02-A-06",
+            "dimension": "authorization_risk",
+            "points_deducted": 50,
+            "evidence_event_ids": [
+              "INV-V02-A-06",
+              "INV-V02-A-07"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V02-A-06",
+          "INV-V02-A-07"
+        ]
+      },
+      {
+        "run_id": "INV-V02-B",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V02-B-06",
+          "INV-V02-B-07"
+        ]
+      },
+      {
+        "run_id": "INV-V03-A",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V03-A-05",
+          "INV-V03-A-06"
+        ]
+      },
+      {
+        "run_id": "INV-V03-B",
+        "quality_score": 50,
+        "rubric_score": 50,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 50,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "FIELD_FABRICATION",
+            "first_fault_event_id": "INV-V03-B-05",
+            "dimension": "business_correctness",
+            "points_deducted": 50,
+            "evidence_event_ids": [
+              "INV-V03-B-05",
+              "INV-V03-B-07"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V03-B-05",
+          "INV-V03-B-07"
+        ]
+      },
+      {
+        "run_id": "INV-V04-A",
+        "quality_score": 70,
+        "rubric_score": 70,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 30,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "CONTEXT_UPDATE",
+            "first_fault_event_id": "INV-V04-A-05",
+            "dimension": "intent_context",
+            "points_deducted": 30,
+            "evidence_event_ids": [
+              "INV-V04-A-05",
+              "INV-V04-A-07"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V04-A-05",
+          "INV-V04-A-07"
+        ]
+      },
+      {
+        "run_id": "INV-V04-B",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V04-B-05",
+          "INV-V04-B-06",
+          "INV-V04-B-07"
+        ]
+      },
+      {
+        "run_id": "INV-V05-A",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V05-A-05",
+          "INV-V05-A-06",
+          "INV-V05-A-07"
+        ]
+      },
+      {
+        "run_id": "INV-V05-B",
+        "quality_score": 70,
+        "rubric_score": 70,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 30,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "MULTI_ITEM_OMISSION",
+            "first_fault_event_id": "INV-V05-B-05",
+            "dimension": "business_correctness",
+            "points_deducted": 30,
+            "evidence_event_ids": [
+              "INV-V05-B-05",
+              "INV-V05-B-07"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": false,
+        "evidence_event_ids": [
+          "INV-V05-B-05",
+          "INV-V05-B-07"
+        ]
+      },
+      {
+        "run_id": "INV-V06-A",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": true,
+        "evidence_event_ids": [
+          "INV-V06-A-05",
+          "INV-V06-A-06",
+          "INV-V06-A-07",
+          "INV-V06-A-08",
+          "INV-V06-A-09",
+          "INV-V06-A-10"
+        ]
+      },
+      {
+        "run_id": "INV-V06-B",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": true,
+        "evidence_event_ids": [
+          "INV-V06-B-05",
+          "INV-V06-B-06",
+          "INV-V06-B-07",
+          "INV-V06-B-08",
+          "INV-V06-B-09",
+          "INV-V06-B-10"
+        ]
+      },
+      {
+        "run_id": "INV-V07-A",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": true,
+        "evidence_event_ids": [
+          "INV-V07-A-05",
+          "INV-V07-A-06",
+          "INV-V07-A-07",
+          "INV-V07-A-08",
+          "INV-V07-A-09",
+          "INV-V07-A-10"
+        ]
+      },
+      {
+        "run_id": "INV-V07-B",
+        "quality_score": 70,
+        "rubric_score": 20,
+        "impact_cap": 20,
+        "cap_reasons": [
+          {
+            "reason": "WRONG_INVOICE_CREATED",
+            "cap": 20,
+            "evidence_event_ids": [
+              "INV-V07-B-05",
+              "INV-V07-B-08",
+              "INV-V07-B-09",
+              "INV-V07-B-10"
+            ]
+          }
+        ],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 30,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "AMOUNT_CALCULATION",
+            "first_fault_event_id": "INV-V07-B-05",
+            "dimension": "business_correctness",
+            "points_deducted": 30,
+            "evidence_event_ids": [
+              "INV-V07-B-05",
+              "INV-V07-B-08"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": true,
+        "evidence_event_ids": [
+          "INV-V07-B-05",
+          "INV-V07-B-08",
+          "INV-V07-B-09",
+          "INV-V07-B-10"
+        ]
+      },
+      {
+        "run_id": "INV-V08-A",
+        "quality_score": 70,
+        "rubric_score": 20,
+        "impact_cap": 20,
+        "cap_reasons": [
+          {
+            "reason": "WRONG_INVOICE_CREATED",
+            "cap": 20,
+            "evidence_event_ids": [
+              "INV-V08-A-07",
+              "INV-V08-A-08",
+              "INV-V08-A-09",
+              "INV-V08-A-10"
+            ]
+          }
+        ],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 30,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [
+          {
+            "label": "TOOL_ARGUMENT_ERROR",
+            "first_fault_event_id": "INV-V08-A-08",
+            "dimension": "workflow_tools",
+            "points_deducted": 30,
+            "evidence_event_ids": [
+              "INV-V08-A-07",
+              "INV-V08-A-08"
+            ]
+          }
+        ],
+        "agent_task_success": false,
+        "business_invoice_created": true,
+        "evidence_event_ids": [
+          "INV-V08-A-07",
+          "INV-V08-A-08",
+          "INV-V08-A-09",
+          "INV-V08-A-10"
+        ]
+      },
+      {
+        "run_id": "INV-V08-B",
+        "quality_score": 100,
+        "rubric_score": 100,
+        "impact_cap": null,
+        "cap_reasons": [],
+        "dimension_penalties": {
+          "authorization_risk": 0,
+          "business_correctness": 0,
+          "intent_context": 0,
+          "workflow_tools": 0,
+          "recovery_terminal": 0
+        },
+        "root_dimensions": [],
+        "agent_task_success": true,
+        "business_invoice_created": true,
+        "evidence_event_ids": [
+          "INV-V08-B-05",
+          "INV-V08-B-06",
+          "INV-V08-B-07",
+          "INV-V08-B-08",
+          "INV-V08-B-09",
+          "INV-V08-B-10"
+        ]
+      }
+    ]
+  }
+}

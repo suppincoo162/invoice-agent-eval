@@ -26,6 +26,12 @@ from invoice_eval.llm_audit import (
     OpenAICompatibleClient,
     audit_case,
 )
+from invoice_eval.rubric import (
+    build_rubric_report,
+    file_sha256,
+    load_rubric_report,
+    write_rubric_report,
+)
 from invoice_eval.workflow import load_workflow
 from invoice_eval.version import __version__
 from invoice_eval.version_report import (
@@ -133,8 +139,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             submission_path=args.submission,
             workflow_path=args.workflow,
             four_way_report_path=args.four_way_report,
+            rubric_report_path=args.rubric_report,
             markdown_output_path=args.output_md,
             json_output_path=args.output_json,
+        )
+    if args.command == "rubric-report":
+        return _rubric_report(
+            cases_path=args.cases,
+            submission_path=args.submission,
+            output_path=args.output,
         )
 
     parser.error(f"Unknown command: {args.command}")
@@ -258,8 +271,20 @@ def _build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_WORKFLOW_PATH,
     )
     report.add_argument("--four-way-report", type=Path)
+    report.add_argument("--rubric-report", type=Path)
     report.add_argument("--output-md", type=Path, required=True)
     report.add_argument("--output-json", type=Path)
+
+    rubric = commands.add_parser(
+        "rubric-report",
+        help=(
+            "Create an optional impact-aware dual-score Rubric report "
+            "without changing the official submission."
+        ),
+    )
+    rubric.add_argument("--cases", type=Path, required=True)
+    rubric.add_argument("--submission", type=Path, required=True)
+    rubric.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -498,6 +523,7 @@ def _version_report(
     submission_path: Path,
     workflow_path: Path,
     four_way_report_path: Path | None,
+    rubric_report_path: Path | None,
     markdown_output_path: Path,
     json_output_path: Path | None,
 ) -> int:
@@ -516,6 +542,11 @@ def _version_report(
             if four_way_report_path is not None
             else None
         )
+        rubric = (
+            load_rubric_report(rubric_report_path)
+            if rubric_report_path is not None
+            else None
+        )
         report = build_version_report(
             validation_dataset=validation_dataset,
             validation_submission=submission,
@@ -523,6 +554,7 @@ def _version_report(
             training_reference=training_reference,
             workflow=workflow,
             four_way_report=four_way,
+            rubric_report=rubric,
             submission_path=str(submission_path),
         )
     except (OSError, ValueError, KeyError, TypeError) as exc:
@@ -536,6 +568,31 @@ def _version_report(
     print(
         f"Wrote version report for {report['case_count']} case(s) "
         f"to {markdown_output_path}"
+    )
+    return 0
+
+
+def _rubric_report(
+    cases_path: Path,
+    submission_path: Path,
+    output_path: Path,
+) -> int:
+    try:
+        dataset = load_dataset(cases_path)
+        submission = load_jsonl_cases(submission_path)
+        rows = build_rubric_report(
+            dataset,
+            submission,
+            source_submission_sha256=file_sha256(submission_path),
+        )
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"Rubric report failed: {exc}")
+        return 1
+    write_rubric_report(rows, output_path)
+    print(
+        f"Wrote Rubric report for {len(rows)} case(s) / "
+        f"{sum(len(row['run_assessments']) for row in rows)} runs "
+        f"to {output_path}"
     )
     return 0
 

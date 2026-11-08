@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
 
 from invoice_eval.evaluator import evaluate_case
 from invoice_eval.models import Case, Dataset, Run
+from invoice_eval.rubric import validate_rubric_report
 from invoice_eval.tooling import find_protective_rejections
 from invoice_eval.version import __version__
 from invoice_eval.workflow import Workflow
@@ -112,12 +114,31 @@ def build_version_report(
     training_reference: Mapping[str, dict[str, Any]],
     workflow: Workflow,
     four_way_report: Mapping[str, Any] | None = None,
+    rubric_report: Mapping[str, dict[str, Any]] | None = None,
     submission_path: str | None = None,
 ) -> dict[str, Any]:
     expected_cases = {case.case_id for case in validation_dataset.cases}
     if set(validation_submission) != expected_cases:
         raise ValueError(
             "validation submission cases do not match the dataset"
+        )
+    if (
+        rubric_report is not None
+        and set(rubric_report) != expected_cases
+    ):
+        raise ValueError(
+            "rubric report cases do not match the dataset"
+        )
+    if rubric_report is not None:
+        validate_rubric_report(
+            validation_dataset,
+            validation_submission,
+            rubric_report,
+            source_submission_sha256=(
+                _sha256(Path(submission_path))
+                if submission_path is not None
+                else None
+            ),
         )
     training = _build_training_regression(
         training_dataset,
@@ -159,12 +180,15 @@ def build_version_report(
         metrics,
         training["consistent"],
     )
-    return {
+    code_commit, working_tree_dirty = _git_provenance()
+    result = {
         "artifact_type": "version_report_data_v1",
         "generated_at": datetime.now().astimezone().isoformat(
             timespec="seconds"
         ),
         "evaluator_version": __version__,
+        "code_commit": code_commit,
+        "working_tree_dirty": working_tree_dirty,
         "submission_path": submission_path,
         "submission_sha256": (
             _sha256(Path(submission_path))
@@ -186,6 +210,9 @@ def build_version_report(
         "release_recommendation": release,
         "four_way": _four_way_summary(four_way_report),
     }
+    if rubric_report is not None:
+        result["rubric"] = _rubric_summary(rubric_report)
+    return result
 
 
 def render_version_report(report: Mapping[str, Any]) -> str:
@@ -207,6 +234,10 @@ def render_version_report(report: Mapping[str, Any]) -> str:
         "| 项 | 内容 |",
         "|---|---|",
         f"| 评测程序版本 | `invoice_eval v{report['evaluator_version']}` |",
+        (
+            f"| 代码提交标识 | `{report['code_commit']}`"
+            f"{'（含未提交改动）' if report['working_tree_dirty'] else ''} |"
+        ),
         "| 数据包版本 | `student-1.0` |",
         f"| 评测时间 | {report['generated_at']} |",
         f"| 待测 Case 数 | {report['case_count']} |",
@@ -452,6 +483,14 @@ def render_version_report(report: Mapping[str, Any]) -> str:
             "python3 -m invoice_eval version-report \\",
             "  --submission outputs/validation-v0.3.0-dev.jsonl \\",
             "  --four-way-report outputs/four-way-report.json \\",
+        ]
+    )
+    if report.get("rubric") is not None:
+        lines.append(
+            "  --rubric-report outputs/rubric-report.jsonl \\"
+        )
+    lines.extend(
+        [
             "  --output-md docs/50-deliverables/version-report.md \\",
             "  --output-json outputs/version-report-data.json",
             "```",
@@ -460,12 +499,63 @@ def render_version_report(report: Mapping[str, Any]) -> str:
             "|---|---|",
             f"| `{report['submission_path'] or '未提供'}` | 官方 Schema 的机器可读结果 |",
             "| `outputs/version-report-data.json` | 本报告的机器可读聚合数据 |",
+        ]
+    )
+    if report.get("rubric") is not None:
+        lines.append(
+            "| `outputs/rubric-report.jsonl` | 可选 Rubric 双轨细分明细 |"
+        )
+    lines.extend(
+        [
             "| [method.md](method.md) | 方法、评分和证据纪律 |",
             "| [review-final.md](review-final.md) | 内部交付验收记录 |",
             "| [extensibility.md](extensibility.md) | 场景扩展说明 |",
             "",
         ]
     )
+    rubric = report.get("rubric")
+    if rubric is not None:
+        lines.extend(
+            [
+                "## 附录 E：Rubric 双轨对照",
+                "",
+                f"> Rubric 版本：`{rubric['rubric_version']}`。"
+                "正式 `quality_score` 与 A/B 方向不变，本附录仅提供影响感知评分。",
+                "",
+                f"- 平均 `quality_score`：{rubric['average_quality_score']:.3f}；",
+                f"- 平均 `rubric_score`：{rubric['average_rubric_score']:.3f}；",
+                f"- 分数发生变化 run：{rubric['changed_run_count']}；",
+                f"- 触发影响封顶 run：{rubric['capped_run_count']}。",
+                "",
+                "| Case / run | 旧分 | 封顶 | rubric_score | 封顶原因 | 五维扣分归属 |",
+                "|---|---:|---:|---:|---|---|",
+            ]
+        )
+        for row in rubric["runs"]:
+            reasons = "；".join(
+                f"{item['reason']}={item['cap']}"
+                for item in row["cap_reasons"]
+            ) or "-"
+            dimensions = "；".join(
+                f"{name}={points}"
+                for name, points in row["dimension_penalties"].items()
+                if points
+            ) or "-"
+            lines.append(
+                "| "
+                + " | ".join(
+                    (
+                        row["run_id"],
+                        str(row["quality_score"]),
+                        str(row["impact_cap"] or "-"),
+                        str(row["rubric_score"]),
+                        reasons,
+                        dimensions,
+                    )
+                )
+                + " |"
+            )
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -874,6 +964,41 @@ def _four_way_summary(
     }
 
 
+def _rubric_summary(
+    rubric_report: Mapping[str, dict[str, Any]],
+) -> dict[str, Any]:
+    runs = [
+        run
+        for case in rubric_report.values()
+        for run in case.get("run_assessments", [])
+    ]
+    return {
+        "rubric_version": next(
+            (
+                case.get("rubric_version")
+                for case in rubric_report.values()
+                if case.get("rubric_version")
+            ),
+            "unknown",
+        ),
+        "run_count": len(runs),
+        "average_quality_score": _average(
+            run.get("quality_score", 0) for run in runs
+        ),
+        "average_rubric_score": _average(
+            run.get("rubric_score", 0) for run in runs
+        ),
+        "changed_run_count": sum(
+            run.get("quality_score") != run.get("rubric_score")
+            for run in runs
+        ),
+        "capped_run_count": sum(
+            run.get("impact_cap") is not None for run in runs
+        ),
+        "runs": runs,
+    }
+
+
 def _root_map(root_causes: list[dict[str, Any]]) -> dict[str, tuple]:
     return {
         str(root.get("label")): (
@@ -915,6 +1040,30 @@ def _average(values: Any) -> float:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _git_provenance() -> tuple[str, bool]:
+    root = Path(__file__).resolve().parents[1]
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip() or "unknown"
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain", "--untracked-files=no"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            ).stdout.strip()
+        )
+    except OSError:
+        return "unknown", True
+    return commit, dirty
 
 
 def _metric_row(

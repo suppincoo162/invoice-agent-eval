@@ -1,6 +1,6 @@
 # 证据约束与影响感知 Rubric（EIR-100，候选）
 
-> 状态：**设计候选，未进入 `v0.3.0` 正式 `quality_score`**。
+> 状态：**已实现可选 `impact-aware-dual-v1` 旁路；完整加权 EIR 尚未进入正式 `quality_score`**。
 >
 > 关联设计：[反事实信用分配](counterfactual-attribution.md)、[依赖图](counterfactual-dependency-graph.md)。
 >
@@ -27,7 +27,9 @@ EIR-100 的目标不是增加主观维度，而是把评分建立在四类可验
 ## 二、与当前评分的关系
 
 - `v0.3.0` 的正式 `quality_score` 继续使用现有 penalty ledger。
-- EIR-100 先并行输出 `rubric_score` 和 `rubric_assessment`，不改变正式 submission、布尔值和 A/B 方向。
+- 当前已通过独立 `rubric-report` 并行输出 `rubric_score`、影响封顶和五维扣分归属，不改变正式 submission、布尔值和 A/B 方向。
+- 五维当前只解释根因扣分归属，不计算加权总分；`rubric_score = min(quality_score, impact_cap)`。
+- Rubric 结果默认不进入官方 submission；`version-report` 与 `verify.py` 都需显式参数才消费。
 - 只有用 14 Case / 28 run 和 8 Case / 16 run 完成双轨校准、确认结论稳定后，才评估在 `v0.4.0` 切换正式评分。
 
 ## 三、Run 级五维 Rubric
@@ -73,28 +75,26 @@ EIR-100 的目标不是增加主观维度，而是把评分建立在四类可验
 
 ## 五、评分结构
 
-建议内部输出结构：
+当前内部输出结构：
 
 ```json
 {
   "rubric_version": "eir-100-v1",
-  "dimension_scores": {
-    "authorization_risk": 25,
+  "dimension_penalties": {
+    "authorization_risk": 0,
     "business_correctness": 30,
-    "intent_context": 15,
-    "workflow_tools": 20,
-    "recovery_terminal": 10
+    "intent_context": 0,
+    "workflow_tools": 0,
+    "recovery_terminal": 0
   },
-  "pre_cap_score": 100,
-  "impact_cap": null,
-  "rubric_score": 100,
-  "evidence_confidence": "high",
-  "independent_root_causes": [],
-  "propagated_findings": []
+  "impact_cap": 20,
+  "rubric_score": 20,
+  "cap_reasons": [],
+  "root_dimensions": []
 }
 ```
 
-这首先是内部结构。官方 submission 是否增加可选字段，需在双轨验证后单独决定。
+该结构只存在独立 `rubric-report.jsonl`。v0.3 不向官方 submission 增加字段。
 
 ## 六、与反事实信用分配的关系
 
@@ -152,11 +152,21 @@ INV-T01-B 修复 B-05 金额口径
 5. 分差变化必须能由公开维度和 `event_id` 解释。
 6. 双轨稳定后，才评估在 `v0.4.0` 切换正式分数。
 
-## 十、尚未决定
+## 十、v0.3 已定与后续未定
 
-- 五个维度的最终权重；
-- `FIELD_FABRICATION` 的字段感知映射；
-- 封顶与维度扣分同时出现时的聚合公式；
-- `rubric_assessment` 是否写入官方输出，或只保存在内部报告；
+v0.3 已定：
+
+- 正式 `quality_score` 与 A/B 方向不变；
+- Rubric 使用独立输出；
+- 五维只做扣分归属；
+- 影响封顶取所有命中条件的最小值；
+- `FIELD_FABRICATION` 默认归入业务正确性；
+- `scripts/verify.py` 默认四阶段，`--with-rubric` 才启用第 5 阶段。
+
+后续未定：
+
+- 完整 EIR 的五个权重；
+- 是否把完整加权 Rubric 切换为正式分数；
+- 更细的字段感知维度映射；
 - 与人工评分的一致性阈值。
 
