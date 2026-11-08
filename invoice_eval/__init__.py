@@ -69,6 +69,12 @@ from invoice_eval.workflow import (
     load_workflow,
 )
 from invoice_eval.version import __version__
+from invoice_eval.version_report import (
+    build_version_report,
+    load_jsonl_cases,
+    render_version_report,
+    write_version_report,
+)
 
 __all__ = [
     "AmountFinding",
@@ -96,6 +102,7 @@ __all__ = [
     "compare_audits",
     "build_penalties",
     "build_four_way_report",
+    "build_version_report",
     "audit_case",
     "analyze_four_way_report",
     "build_analysis_prompts",
@@ -118,11 +125,14 @@ __all__ = [
     "load_dataset",
     "load_local_manifest_statuses",
     "load_review_jsonl",
+    "load_jsonl_cases",
     "load_workflow",
     "render_four_way_markdown",
+    "render_version_report",
     "render_analysis_markdown",
     "validate_analysis",
     "validate_review",
     "write_four_way_report",
     "write_analysis",
+    "write_version_report",
 ]

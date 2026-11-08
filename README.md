@@ -4,6 +4,8 @@
 
 > 参赛：李经霖 / 王怡然 · 报名截止 2026-11-12 · 初赛截止 2026-11-13
 
+> 当前开发版本：`v0.3.0-dev`；正式发布目标：`v0.3.0`。
+
 ## 这个项目做什么
 
 **评估已执行的开票 Agent，不是实现开票 Agent。**
@@ -48,10 +50,11 @@
 ## 运行与环境（依赖说明）
 
 - **环境**：Python **≥ 3.10**（用到 `X | Y` 类型标注语法）。
-- **第三方依赖：无**。全部为标准库（`argparse` / `json` / `pathlib` / `dataclasses` / `decimal` / `typing` / `collections`），**不需要 `pip install`**，也无任何 LLM / API / 网络调用。
+- **第三方依赖：无**。正式 `evaluate` 只使用 Python 标准库，不调用 LLM、API 或网络。
 - **运行**：
 
   ```bash
+  python -m invoice_eval --version
   python -m invoice_eval evaluate --cases <cases.jsonl> --output <submission.jsonl>
   ```
 
@@ -65,8 +68,7 @@ OpenAI-compatible API 或本地 Ollama 对 Case 做盲审，输出单独的
 `llm-review.jsonl`，不会修改正式 submission。
 
 ```bash
-cp .env.example .env
-# 编辑 .env 后由当前 shell 读取；不要把 .env 提交到 Git
+# 创建 .env 并填入 INVOICE_EVAL_LLM_* 配置；不要把 .env 提交到 Git
 set -a
 source .env
 set +a
@@ -78,10 +80,42 @@ python -m invoice_eval audit \
   --cache-dir outputs/llm-cache
 
 python -m invoice_eval compare-audit \
-  --submission outputs/validation-v021.jsonl \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
   --llm-review outputs/llm-review.jsonl \
   --output outputs/audit-comparison.jsonl \
   --case-id INV-V03
+```
+
+四源确定性报告（不调用 LLM）：
+
+```bash
+python -m invoice_eval four-way-report \
+  --deterministic outputs/validation-v0.3.0-dev.jsonl \
+  --human outputs/manual-review/v0.2.1-first-pass.jsonl \
+  --local-llm outputs/llm-review-local-v5-all.jsonl \
+  --cloud-llm outputs/llm-review-cloud-v5-all.jsonl \
+  --local-manifest outputs/llm-review-local-v5-manifest.json \
+  --output-json outputs/four-way-report.json \
+  --output-md docs/50-deliverables/four-way-report.md
+
+python -m invoice_eval four-way-analysis \
+  --report-json outputs/four-way-report.json \
+  --deterministic outputs/validation-v0.3.0-dev.jsonl \
+  --human outputs/manual-review/v0.2.1-first-pass.jsonl \
+  --local-llm outputs/llm-review-local-v5-all.jsonl \
+  --cloud-llm outputs/llm-review-cloud-v5-all.jsonl \
+  --output-json outputs/four-way-llm-analysis.json \
+  --output-md docs/50-deliverables/four-way-llm-analysis.md
+```
+
+官方主报告由程序确定性生成：
+
+```bash
+python -m invoice_eval version-report \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --four-way-report outputs/four-way-report.json \
+  --output-md docs/50-deliverables/version-report.md \
+  --output-json outputs/version-report-data.json
 ```
 
 云端 API 与 Ollama 使用同一接口，只需切换 `BASE_URL` 和 `MODEL`。
@@ -92,14 +126,14 @@ API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，�
 两个模型与确定性评测在版本方向、两个布尔值、根因和首错上一致，但证据范围
 不同；比较结果单独输出，正式 submission 不受影响。
 
-## 当前状态（**as of 2026-11-07** · 快照，非实时）
+## 当前状态（**as of 2026-11-08** · 快照，非实时）
 
 > 实时进度只在一处维护：[`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)。以下是带日期的快照，方便"刚拿到仓库的人/Agent"一眼判断该不该往下干。
 
 | 项 | 状态 |
 |---|---|
-| **所处阶段** | **确定性评测、训练/验证回归、交付文档和 LLM 独立盲审试点已完成；进入决赛打磨** |
+| **所处阶段** | **`v0.3.0-dev`：确定性评测、训练/验证回归、LLM 独立盲审和四源报告生成器已完成；进入创新分析与决赛打磨** |
 | 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) · 可选 OpenAI-compatible/Ollama 盲审 |
-| 未完成 | 云端 API 实跑 · 决赛演示材料 · 最终发布包 |
-| **下一步** | 配置云端 API 并完成三方对照，见 [`docs/40-plan/tasks.md`](docs/40-plan/tasks.md) |
+| 未完成 | DeepSeek 分析附录实跑 · 本地 V04 最终处理 · Rubric · 反事实薄切片 · 决赛演示材料 · `v0.3.0` 最终发布包 |
+| **下一步** | 配置原 DeepSeek Key，实跑四源分析；随后完成 Rubric 与反事实薄切片 |
 | 谁能动 | 任何人都可以读；**改 `main` 一律走 MR**（见 [`docs/git-workflow.md`](docs/git-workflow.md)）；`docs/00-brief/data/` 是组委会资料，**只读** |
