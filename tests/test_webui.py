@@ -10,6 +10,7 @@ from invoice_eval.cli import main
 from invoice_eval.rubric import load_rubric_report
 from invoice_eval.version_report import load_jsonl_cases
 from invoice_eval.webui import build_webui_data, write_webui
+from invoice_eval.webui import APPENDIX_FILES
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -138,12 +139,51 @@ class WebUITests(unittest.TestCase):
                 encoding="utf-8"
             )
 
+        # 2026-11-09 改：新增 appendices/ 目录（附录文件复制进站内，见
+        # _appendices 的修复说明——原实现用 ../../ 越出静态服务根 ⇒ 链接全 404）
         self.assertEqual(
             names,
-            {"index.html", "styles.css", "app.js", "data.js"},
+            {"index.html", "styles.css", "app.js", "data.js", "appendices"},
         )
         self.assertNotRegex(data_js, r"https?://")
         self.assertNotIn("INVOICE_EVAL_LLM_API_KEY", data_js)
+
+    def test_appendix_links_are_inside_site_root(self) -> None:
+        """附录链接必须是站内相对路径，不得用 ../ 越出静态服务根。
+
+        2026-11-09 加：经霖实测页面附录链接全部 404——原实现写死
+        `root = "../../"`，而静态服务以 output_dir 为根 ⇒ 越界。
+        """
+        appendices = self.data["appendices"]
+        for key, href in appendices.items():
+            if not href:
+                continue
+            self.assertFalse(
+                href.startswith(("../", "/")),
+                f"{key} 链接越出站点根：{href}",
+            )
+            self.assertTrue(
+                href.startswith("appendices/"),
+                f"{key} 应为 appendices/ 下的站内路径：{href}",
+            )
+
+    def test_written_appendix_files_are_reachable(self) -> None:
+        """write_webui 必须把附录文件真实复制到 output_dir/appendices/。"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "webui"
+            write_webui(self.data, output_dir)
+            appendix_dir = output_dir / "appendices"
+            self.assertTrue(appendix_dir.is_dir(), "appendices/ 未创建")
+            produced = {p.name for p in appendix_dir.iterdir()}
+            expected = {
+                Path(rel).name
+                for key, rel in APPENDIX_FILES.items()
+                if self.data["appendices"].get(key)
+            }
+            self.assertTrue(
+                expected.issubset(produced),
+                f"缺少附录文件：{expected - produced}",
+            )
 
     def test_cli_generates_webui_without_changing_submission(self) -> None:
         before = hashlib.sha256(SUBMISSION_PATH.read_bytes()).hexdigest()
