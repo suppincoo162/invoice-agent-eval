@@ -1,14 +1,14 @@
 # AI 开票 Agent 四源独立评判技术附录
 
 > 主报告：[version-report.md](version-report.md)。本附录只提供技术验证明细。
-> 生成时间：`2026-11-08T16:48:58+08:00`
+> 生成时间：`2026-11-09T21:54:09+08:00`
 > 统计方式：确定性程序，不调用 LLM，不采用多数投票。
 
 ## 1. 输入与覆盖
 
 | 来源 | 文件 | Case 数 | 缺失/拒绝 | 模型与版本 |
 |---|---|---:|---|---|
-| 确定性评测器 | `outputs/validation-v0.3.0-dev.jsonl` | 8 | 无 | - |
+| 确定性评测器 | `outputs/validation-v0.3.0.jsonl` | 8 | 无 | - |
 | 独立复核 | `outputs/manual-review/v0.3.0-delta-review.jsonl` | 8 | 无 | - |
 | 本地 LLM | `outputs/llm-review-local-v5-all.jsonl` | 7 | `INV-V04`：contract_rejected: successful run cannot include a root cause | model=deepseek-r1:14b；prompt=llm-audit-v5；evaluator=0.3.0-dev |
 | 云端 LLM | `outputs/llm-review-cloud-v5-all.jsonl` | 8 | 无 | model=deepseek-flash；prompt=llm-audit-v5；evaluator=0.3.0-dev |
