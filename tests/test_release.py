@@ -15,6 +15,10 @@ VERIFY_REPORT = PROJECT_ROOT / "outputs" / "verify-report.md"
 
 
 class ReleasePackageTests(unittest.TestCase):
+    @unittest.skipUnless(
+        (PROJECT_ROOT / ".git").exists(),
+        "release packaging test requires a Git checkout",
+    )
     def test_builds_source_archives_manifest_and_checksums(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "release"
