@@ -56,6 +56,7 @@
 - [x] **T-031** 从结构化输入确定性生成官方七节主报告和机器摘要 —— ✅ 证据：[`invoice_eval/version_report.py`](../../invoice_eval/version_report.py)、[`tests/test_version_report.py`](../../tests/test_version_report.py)
 - [x] **T-032** 完成 Rubric 三路对抗审计并修复 P0/P1 —— ✅ 证据：[`50-deliverables/rubric-adversarial-audit-2026-11-08.md`](../50-deliverables/rubric-adversarial-audit-2026-11-08.md)、`117 passed`、`verify --with-rubric` 5/5
 - [x] **T-033** 实现离线、只读静态 WebUI：Case 导航、A/B 时间线、四方对照、Rubric、事实/推断/未知、原始材料与证据跳转 —— ✅ 证据：[`invoice_eval/webui.py`](../../invoice_eval/webui.py)、[`webui/`](../../webui/)、[`tests/test_webui.py`](../../tests/test_webui.py)、`outputs/webui/index.html`
+- [x] **T-034** 冻结 `v0.3.0` 正式版本并从 clean commit 生成可复现发布包 —— ✅ 证据：[`scripts/build-release.py`](../../scripts/build-release.py)、`128 passed`、`verify --with-rubric` 5/5、源码包独立解压复测与官方格式校验通过
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 ### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）
