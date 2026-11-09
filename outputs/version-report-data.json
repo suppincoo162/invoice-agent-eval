@@ -1,9 +1,9 @@
 {
   "artifact_type": "version_report_data_v1",
-  "generated_at": "2026-11-09T22:06:21+08:00",
+  "generated_at": "2026-11-09T22:17:51+08:00",
   "evaluator_version": "0.3.0",
-  "code_commit": "c7a38c7",
-  "working_tree_dirty": true,
+  "code_commit": "84fc189",
+  "working_tree_dirty": false,
   "submission_path": "outputs/validation-v0.3.0.jsonl",
   "submission_sha256": "7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe",
   "case_count": 8,

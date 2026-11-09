@@ -1,0 +1,15 @@
+{
+  "artifact_type": "validation_submission_manifest_v1",
+  "evaluator_version": "v0.3.0",
+  "base_commit": "84fc189f835db40a103c80e599621e10a777f094",
+  "working_tree": false,
+  "generated_at": "2026-11-09T22:17:51+08:00",
+  "dataset": "docs/00-brief/data/04_无标注验证轨迹.jsonl",
+  "dataset_version": "student-1.0",
+  "submission": "outputs/validation-v0.3.0.jsonl",
+  "sha256": "7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe",
+  "case_count": 8,
+  "run_count": 16,
+  "command": "python3 -m invoice_eval evaluate --cases docs/00-brief/data/04_无标注验证轨迹.jsonl --output outputs/validation-v0.3.0.jsonl",
+  "official_format_validator": "passed"
+}
