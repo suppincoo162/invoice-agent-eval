@@ -62,6 +62,7 @@ Return exactly one JSON object with:
 }
 
 Rules:
+- Write every statement, basis, and missing_evidence value in Simplified Chinese.
 - factual_findings contain only direct copies or combinations of supplied facts.
 - inferences must state their basis and must not be presented as facts.
 - unknowns must explain what evidence is missing.

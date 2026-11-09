@@ -62,6 +62,7 @@ class FourWayAnalysisTests(unittest.TestCase):
         self.assertIn("inferences", system_prompt)
         self.assertIn("unknowns", system_prompt)
         self.assertIn("Do not use majority voting", system_prompt)
+        self.assertIn("Simplified Chinese", system_prompt)
         self.assertIn("source_records", user_prompt)
         self.assertNotIn("training label", user_prompt)
 
