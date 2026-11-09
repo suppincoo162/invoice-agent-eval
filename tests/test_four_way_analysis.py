@@ -9,6 +9,7 @@ from invoice_eval.four_way_analysis import (
     validate_analysis,
     write_analysis,
 )
+from invoice_eval.version import __version__
 
 
 class StaticAnalysisClient:
@@ -21,6 +22,19 @@ class StaticAnalysisClient:
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
         return self.response
+
+
+class SequencedAnalysisClient(StaticAnalysisClient):
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = 0
+        self.model = "analysis-model"
+
+    def complete_json(self, *, system_prompt, user_prompt):
+        self.calls += 1
+        self.system_prompt = system_prompt
+        self.user_prompt = user_prompt
+        return self.responses.pop(0)
 
 
 class FourWayAnalysisTests(unittest.TestCase):
@@ -61,6 +75,7 @@ class FourWayAnalysisTests(unittest.TestCase):
         self.assertIn("inferences", system_prompt)
         self.assertIn("unknowns", system_prompt)
         self.assertIn("Do not use majority voting", system_prompt)
+        self.assertIn("Simplified Chinese", system_prompt)
         self.assertIn("source_records", user_prompt)
         self.assertNotIn("training label", user_prompt)
 
@@ -86,7 +101,7 @@ class FourWayAnalysisTests(unittest.TestCase):
             analysis["prompt_version"],
             "four-way-analysis-v1",
         )
-        self.assertEqual(analysis["evaluator_version"], "0.3.0-dev")
+        self.assertEqual(analysis["evaluator_version"], __version__)
         self.assertEqual(analysis["model"], "analysis-model")
         self.assertIn("## 事实", markdown)
         self.assertIn("## 推断", markdown)
@@ -100,6 +115,23 @@ class FourWayAnalysisTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "unknown event_id"):
             validate_analysis(self.report, self.sources, analysis)
+
+    def test_invalid_analysis_gets_one_repair_attempt(self) -> None:
+        invalid = _valid_analysis()
+        invalid["factual_findings"][0]["event_ids"] = [
+            "INV-V01-A-99"
+        ]
+        client = SequencedAnalysisClient([invalid, _valid_analysis()])
+
+        analysis = analyze_four_way_report(
+            report=self.report,
+            sources=self.sources,
+            client=client,
+        )
+
+        self.assertEqual(client.calls, 2)
+        self.assertIn("上一轮输出未通过程序校验", client.user_prompt)
+        self.assertEqual(analysis["model"], "analysis-model")
 
     def test_rejects_inference_without_basis(self) -> None:
         analysis = _valid_analysis()

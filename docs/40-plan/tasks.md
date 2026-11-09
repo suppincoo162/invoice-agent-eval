@@ -1,7 +1,7 @@
 # 任务拆分
 
 > **本文件是「现在在推什么」的唯一主位置。**
-> 当前阶段＝**`v0.3.0-dev`：确定性评测、证据完整性修复与训练/验证集回归已完成；下一步完成四方对照和 `v0.3.0` 交付**（as of 2026-11-08）。
+> 当前阶段＝**`v0.3.0`：确定性评测、四源验证、Rubric 旁路、静态 WebUI 和正式发布包已完成**（as of 2026-11-09）。
 > 完成的判定**必须有证据指针**（文档 / commit / 命令输出），不靠记忆。
 
 ## 阶段 A · 备料（事实层）—— ✅ 已完成 2026-10-31
@@ -49,13 +49,14 @@
 - [x] **T-010** 用训练集回归，对比参考标注 —— ✅ 证据：[`tests/test_training_regression.py`](../../tests/test_training_regression.py)（14 Case / 28 run 的布尔、根因、首错、证据和方向全部一致）
 - [x] **T-011** 跑验证集，过格式校验 —— ✅ 证据：[`tests/test_validation_regression.py`](../../tests/test_validation_regression.py)（8 Case / 16 run，场景方向一致且通过官方校验）
 - [x] **T-023** 强化 LLM 盲审契约：成功 run 也必须保留非空证据，有根因时不得标记处理成功 —— ✅ 证据：[`invoice_eval/llm_audit.py`](../../invoice_eval/llm_audit.py)、[`tests/test_llm_audit.py`](../../tests/test_llm_audit.py)、Prompt `llm-audit-v5`
-- [x] **T-024** 统一版本语义：正式发布目标 `v0.3.0`，当前开发标识 `v0.3.0-dev`，Prompt 与人工初审快照独立标识 —— ✅ 证据：[`invoice_eval/version.py`](../../invoice_eval/version.py)、ADR-005、[`50-deliverables/method.md`](../50-deliverables/method.md)
+- [x] **T-024** 统一版本语义：开发标识 `v0.3.0-dev` 冻结为正式版本 `v0.3.0`，Prompt 与历史人工快照保留独立标识 —— ✅ 证据：[`invoice_eval/version.py`](../../invoice_eval/version.py)、ADR-005、[`50-deliverables/method.md`](../50-deliverables/method.md)
 - [x] **T-025** 实现确定性四源报告生成器，区分核心诊断分歧与证据范围差异 —— ✅ 证据：[`invoice_eval/four_way.py`](../../invoice_eval/four_way.py)、[`tests/test_four_way.py`](../../tests/test_four_way.py)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
 - [x] **T-026** 实现可选四源 LLM 分析层，强制区分事实、推断、未知并校验事件锚点 —— ✅ 证据：[`invoice_eval/four_way_analysis.py`](../../invoice_eval/four_way_analysis.py)、[`tests/test_four_way_analysis.py`](../../tests/test_four_way_analysis.py)、Prompt `four-way-analysis-v1`
 - [x] **T-027** 重构唯一主报告：业务结论、产品场景、研发证据分层，四源与 LLM 材料改为附录 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
 - [x] **T-031** 从结构化输入确定性生成官方七节主报告和机器摘要 —— ✅ 证据：[`invoice_eval/version_report.py`](../../invoice_eval/version_report.py)、[`tests/test_version_report.py`](../../tests/test_version_report.py)
 - [x] **T-032** 完成 Rubric 三路对抗审计并修复 P0/P1 —— ✅ 证据：[`50-deliverables/rubric-adversarial-audit-2026-11-08.md`](../50-deliverables/rubric-adversarial-audit-2026-11-08.md)、`117 passed`、`verify --with-rubric` 5/5
 - [x] **T-033** 实现离线、只读静态 WebUI：Case 导航、A/B 时间线、四方对照、Rubric、事实/推断/未知、原始材料与证据跳转 —— ✅ 证据：[`invoice_eval/webui.py`](../../invoice_eval/webui.py)、[`webui/`](../../webui/)、[`tests/test_webui.py`](../../tests/test_webui.py)、`outputs/webui/index.html`
+- [x] **T-034** 冻结 `v0.3.0` 正式版本并从 clean commit 生成可复现发布包 —— ✅ 证据：[`scripts/build-release.py`](../../scripts/build-release.py)、`128 passed`、`verify --with-rubric` 5/5、源码包独立解压复测与官方格式校验通过
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 ### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）

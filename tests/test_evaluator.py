@@ -160,7 +160,7 @@ class EvaluatorTests(unittest.TestCase):
                 main(["--version"])
 
         self.assertEqual(raised.exception.code, 0)
-        self.assertEqual(output.getvalue().strip(), "invoice-eval 0.3.0-dev")
+        self.assertEqual(output.getvalue().strip(), "invoice-eval 0.3.0")
 
 
 if __name__ == "__main__":

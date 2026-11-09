@@ -1,10 +1,10 @@
 {
   "artifact_type": "four_way_report_v1",
-  "generated_at": "2026-11-08T16:48:58+08:00",
+  "generated_at": "2026-11-09T21:54:09+08:00",
   "sources": {
     "deterministic": {
       "source": "deterministic",
-      "path": "outputs/validation-v0.3.0-dev.jsonl",
+      "path": "outputs/validation-v0.3.0.jsonl",
       "present_count": 8,
       "missing_cases": [],
       "statuses": {},

@@ -238,7 +238,7 @@ APPENDIX_FILES = {
     "version_report": "docs/50-deliverables/version-report.md",
     "four_way_report": "docs/50-deliverables/four-way-report.md",
     "llm_analysis": "docs/50-deliverables/four-way-llm-analysis.md",
-    "validation_jsonl": "outputs/validation-v0.3.0-dev.jsonl",
+    "validation_jsonl": "outputs/validation-v0.3.0.jsonl",
     "rubric_jsonl": "outputs/rubric-report.jsonl",
 }
 

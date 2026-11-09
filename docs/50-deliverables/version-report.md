@@ -1,6 +1,6 @@
 # AI 开票 Agent A/B 版本评测报告
 
-> 当前版本：`v0.3.0-dev`
+> 当前版本：`v0.3.0`
 >
 > 数据包版本：`student-1.0`
 
@@ -10,17 +10,17 @@
 
 | 项 | 内容 |
 |---|---|
-| 评测程序版本 | `invoice_eval v0.3.0-dev` |
-| 代码提交标识 | `08bc1cf` |
+| 评测程序版本 | `invoice_eval v0.3.0` |
+| 代码提交标识 | `84fc189` |
 | 数据包版本 | `student-1.0` |
-| 评测时间 | 2026-11-08T20:43:56+08:00 |
+| 评测时间 | 2026-11-09T22:17:51+08:00 |
 | 待测 Case 数 | 8 |
 | 有效 A/B 成对 Case 数 | 8 |
 | 训练校准 | 14 Case / 28 run；全部一致 |
 | 运行环境与依赖 | Python 3.10+；正式评测仅使用标准库 |
 | 评分方法 | [method.md](method.md) |
 | 结果 SHA256 | `7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe` |
-| 机器可读输出 | `outputs/validation-v0.3.0-dev.jsonl` |
+| 机器可读输出 | `outputs/validation-v0.3.0.jsonl` |
 
 ## 2. 执行摘要
 
@@ -131,7 +131,7 @@
 python3 -m invoice_eval --version
 python3 scripts/verify.py --report /tmp/verify.md
 python3 -m invoice_eval version-report \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --four-way-report outputs/four-way-report.json \
   --rubric-report outputs/rubric-report.jsonl \
   --output-md docs/50-deliverables/version-report.md \
@@ -140,7 +140,7 @@ python3 -m invoice_eval version-report \
 
 | 材料 | 用途 |
 |---|---|
-| `outputs/validation-v0.3.0-dev.jsonl` | 官方 Schema 的机器可读结果 |
+| `outputs/validation-v0.3.0.jsonl` | 官方 Schema 的机器可读结果 |
 | `outputs/version-report-data.json` | 本报告的机器可读聚合数据 |
 | `outputs/rubric-report.jsonl` | 可选 Rubric 双轨细分明细 |
 | [method.md](method.md) | 方法、评分和证据纪律 |
