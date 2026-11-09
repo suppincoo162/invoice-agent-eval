@@ -99,7 +99,18 @@ def analyze_four_way_report(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
     )
-    validated = validate_analysis(report, sources, candidate)
+    try:
+        validated = validate_analysis(report, sources, candidate)
+    except ValueError as exc:
+        candidate = client.complete_json(
+            system_prompt=system_prompt,
+            user_prompt=(
+                user_prompt
+                + "\n\n上一轮输出未通过程序校验，请修正后重新返回完整 JSON：\n"
+                + str(exc)
+            ),
+        )
+        validated = validate_analysis(report, sources, candidate)
     return {
         "artifact_type": "four_way_llm_analysis_v1",
         "evaluator_version": __version__,
