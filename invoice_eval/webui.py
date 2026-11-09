@@ -117,6 +117,16 @@ def write_webui(
         if not source.is_file():
             raise ValueError(f"missing WebUI asset: {source}")
         shutil.copyfile(source, output_dir / name)
+    # 🔴 2026-11-09 修：把附录文件复制进 output_dir/appendices/，
+    # 使站内相对链接（appendices/xxx）在静态服务下可达。
+    project_root = Path(__file__).resolve().parents[1]
+    appendix_dir = output_dir / "appendices"
+    appendix_dir.mkdir(parents=True, exist_ok=True)
+    for rel in APPENDIX_FILES.values():
+        src = project_root / rel
+        if src.is_file():
+            shutil.copyfile(src, appendix_dir / src.name)
+
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     (output_dir / "data.js").write_text(
         "window.INVOICE_EVAL_DATA=" + payload + ";\n",
@@ -224,23 +234,37 @@ def _analysis_by_case(
     return result
 
 
+APPENDIX_FILES = {
+    "version_report": "docs/50-deliverables/version-report.md",
+    "four_way_report": "docs/50-deliverables/four-way-report.md",
+    "llm_analysis": "docs/50-deliverables/four-way-llm-analysis.md",
+    "validation_jsonl": "outputs/validation-v0.3.0-dev.jsonl",
+    "rubric_jsonl": "outputs/rubric-report.jsonl",
+}
+
+
 def _appendices(
     llm_analysis: Mapping[str, Any] | None,
+    *,
+    project_root: Path | None = None,
+    output_dir: Path | None = None,
 ) -> dict[str, str]:
-    root = "../../"
-    return {
-        "version_report": root + "docs/50-deliverables/version-report.md",
-        "four_way_report": root + "docs/50-deliverables/four-way-report.md",
-        "llm_analysis": (
-            root + "docs/50-deliverables/four-way-llm-analysis.md"
-            if llm_analysis is not None
-            else ""
-        ),
-        "validation_jsonl": (
-            root + "outputs/validation-v0.3.0-dev.jsonl"
-        ),
-        "rubric_jsonl": root + "outputs/rubric-report.jsonl",
-    }
+    """返回附录链接。
+
+    🔴 2026-11-09 修（经霖实测：页面所有附录链接 404）：
+        原实现写死 `root = "../../"`，假定 output_dir 在项目根下两层。
+        但静态服务通常以 output_dir 为根（`python -m http.server --directory outputs/webui`），
+        任何 `../` 都会越出服务根 ⇒ 浏览器一律 404。
+        现改为：**把附录文件复制进 output_dir/appendices/**，链接用站内相对路径。
+    """
+    links: dict[str, str] = {}
+    for key, rel in APPENDIX_FILES.items():
+        if key == "llm_analysis" and llm_analysis is None:
+            links[key] = ""
+            continue
+        # 默认：站内相对路径（文件由 write_webui 复制到 appendices/ 下）
+        links[key] = "appendices/" + Path(rel).name
+    return links
 
 
 def _release_recommendation(
