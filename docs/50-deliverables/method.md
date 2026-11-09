@@ -286,6 +286,28 @@ python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户�
 - [反事实信用分配](../20-design/counterfactual-attribution.md)：在复制视图中修复首因字段，分析传播消失、独立根因残留和责任对象。
 - 两者当前均为候选，不进入 `v0.3.0` 正式 `quality_score`；采用 ADR-006 的双轨校准路线。
 
+## 十八、离线只读 WebUI
+
+`webui` 子命令只读取既有 Case、正式 submission、四源报告、Rubric 和可选 LLM
+分析，生成独立目录：
+
+```bash
+python3 -m invoice_eval webui \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --four-way-report outputs/four-way-report.json \
+  --rubric-report outputs/rubric-report.jsonl \
+  --llm-analysis outputs/four-way-llm-analysis.json \
+  --output-dir outputs/webui
+```
+
+页面使用原生 HTML/CSS/JavaScript，无 CDN、后端服务或网络请求，可直接打开
+`outputs/webui/index.html`。三栏分别承载 Case 导航、主分析视图和证据检查器；
+支持 URL 状态 `#case=INV-V07&tab=timeline`、事件跳转、打印和移动端布局。
+
+WebUI 不重新评测、不调用 LLM、不修改正式 submission。Rubric 文件必须与输入
+submission 的 SHA256 一致；本地 V04 的契约拒绝作为来源事实保留，不补造结果。
+
 ## 十八、官方主报告确定性生成
 
 ```bash
@@ -301,3 +323,22 @@ python3 -m invoice_eval version-report \
 - 从当前 submission 选择 Bad Case 和回归项；
 - 按官方七节模板渲染主报告，四源、LLM、证据边界和复现材料放附录；
 - 不调用 LLM，所有数字和 Case 均来自结构化输入。
+
+## 十九、可选 Rubric 双轨评分
+
+```bash
+python3 -m invoice_eval rubric-report \
+  --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
+  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --output outputs/rubric-report.jsonl
+```
+
+- 正式 `quality_score`、两个布尔值、A/B 方向和 submission 均不改变。
+- Rubric 按 `run_id` 绑定 raw run，合法乱序 submission 会恢复为 A/B 顺序而不是跨 run 错配。
+- `rubric_score = min(quality_score, impact_cap)`；无封顶时与旧分相同。
+- 五维用于解释根因扣分归属，不做二次加权。
+- 封顶规则：未确认尝试提交 20；错误金额实际开票 20；重复风险后提交 20；失败回调称成功 10；多个命中取最小值。
+- 封顶证据同时包含首因和实际后果事件；错误发票会包含回调与终态，重复风险后提交会包含提交事件。
+- Rubric JSONL 绑定来源 submission SHA256、evaluator version 和生成时间；主报告消费前会校验 Case/run、旧分、布尔值、方向、公式和同 run 证据。
+- `version-report --rubric-report` 只在附录增加双轨对照；不传时主报告行为不变。
+- `scripts/verify.py` 默认仍为四阶段；`--with-rubric` 才启用第 5 阶段。

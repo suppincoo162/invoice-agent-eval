@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 开票 Agent 评测台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">INVOICE-AGENT-EVAL</div>
+      <h1>AI 开票 Agent 版本评测台</h1>
+    </div>
+    <div class="topbar-meta" id="topbar-meta"></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Case 列表">
+      <div class="sidebar-heading">
+        <span>验证 Case</span>
+        <span class="count" id="case-count"></span>
+      </div>
+      <label class="search">
+        <span class="sr-only">搜索 Case</span>
+        <input id="case-search" type="search" placeholder="搜索 Case / 场景">
+      </label>
+      <nav id="case-list" class="case-list"></nav>
+      <div class="sidebar-foot">
+        <a id="link-report" href="#">版本报告</a>
+        <a id="link-four-way" href="#">四源附录</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="hero" id="case-hero" aria-live="polite"></section>
+      <nav class="tabs" id="tabs" aria-label="分析视图">
+        <button data-tab="summary" class="active">业务摘要</button>
+        <button data-tab="timeline">A/B 时间线</button>
+        <button data-tab="sources">四方对照</button>
+        <button data-tab="rubric">Rubric</button>
+        <button data-tab="analysis">事实 / 推断 / 未知</button>
+        <button data-tab="raw">原始材料</button>
+      </nav>
+      <section id="tab-content" class="tab-content" aria-live="polite"></section>
+    </main>
+
+    <aside class="evidence-panel" id="evidence-panel" aria-label="证据检查器">
+      <div class="evidence-heading">
+        <div>
+          <div class="eyebrow dark">EVIDENCE</div>
+          <h2>证据检查器</h2>
+        </div>
+        <span class="badge blue">只读</span>
+      </div>
+      <div id="evidence-content"></div>
+    </aside>
+  </div>
+
+  <div id="empty-state" class="empty-state hidden">
+    <h2>未找到 WebUI 数据</h2>
+    <p>请先运行 <code>invoice_eval webui</code> 生成 <code>data.js</code>。</p>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

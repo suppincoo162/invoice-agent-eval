@@ -54,6 +54,8 @@
 - [x] **T-026** 实现可选四源 LLM 分析层，强制区分事实、推断、未知并校验事件锚点 —— ✅ 证据：[`invoice_eval/four_way_analysis.py`](../../invoice_eval/four_way_analysis.py)、[`tests/test_four_way_analysis.py`](../../tests/test_four_way_analysis.py)、Prompt `four-way-analysis-v1`
 - [x] **T-027** 重构唯一主报告：业务结论、产品场景、研发证据分层，四源与 LLM 材料改为附录 —— ✅ 证据：[`50-deliverables/version-report.md`](../50-deliverables/version-report.md)、[`50-deliverables/four-way-report.md`](../50-deliverables/four-way-report.md)
 - [x] **T-031** 从结构化输入确定性生成官方七节主报告和机器摘要 —— ✅ 证据：[`invoice_eval/version_report.py`](../../invoice_eval/version_report.py)、[`tests/test_version_report.py`](../../tests/test_version_report.py)
+- [x] **T-032** 完成 Rubric 三路对抗审计并修复 P0/P1 —— ✅ 证据：[`50-deliverables/rubric-adversarial-audit-2026-11-08.md`](../50-deliverables/rubric-adversarial-audit-2026-11-08.md)、`117 passed`、`verify --with-rubric` 5/5
+- [x] **T-033** 实现离线、只读静态 WebUI：Case 导航、A/B 时间线、四方对照、Rubric、事实/推断/未知、原始材料与证据跳转 —— ✅ 证据：[`invoice_eval/webui.py`](../../invoice_eval/webui.py)、[`webui/`](../../webui/)、[`tests/test_webui.py`](../../tests/test_webui.py)、`outputs/webui/index.html`
 
 ## 阶段 D · 交付 —— ✅ 已完成 2026-11-04
 ### 交付件核对清单（官方手册 §六 要求，2026-11-04 补）
@@ -74,6 +76,6 @@
 ## 后续候选（未排期，不影响当前 MVP）
 
 - [x] **T-028** 固化 EIR-100 Rubric 候选设计：五维评分、影响封顶、证据置信度分离 —— ✅ 证据：[`20-design/evidence-impact-rubric.md`](../20-design/evidence-impact-rubric.md)、ADR-006
-- [ ] **T-029** 实现 Rubric 双轨输出并完成 28+16 校准 —— 验收：正式方向不变；`rubric_score` 可由维度和证据解释；封顶与传播去重有测试
+- [x] **T-029** 实现 Rubric 双轨输出并完成 28+16 校准 —— ✅ 证据：[`invoice_eval/rubric.py`](../../invoice_eval/rubric.py)、[`tests/test_rubric.py`](../../tests/test_rubric.py)、`scripts/verify.py --with-rubric`
 - [ ] **T-030** 实现反事实最小修复薄切片 —— 验收：金额、上下文、提交漂移、批量明细四类；仅内部视图；无法修复时明确降级
 - [ ] **T-021** 评估是否试点反事实最小修复与对象感知信用分配 —— 前置：T-010 完成，且训练集出现至少两个真实归因缺失或重复；即使试点也只能影响内部归因与 `downstream_impact`，不得改变 schema、布尔结论或评分规则。设计与门槛见 [`20-design/counterfactual-attribution.md`](../20-design/counterfactual-attribution.md)、[`20-design/decisions.md`](../20-design/decisions.md) ADR-004

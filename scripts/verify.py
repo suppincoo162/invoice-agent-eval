@@ -7,15 +7,17 @@
     没有入口、没有统一结论、失败也不知道坏在哪一环。
 
 用法：
-    python scripts/verify.py                 # 全量（含 pytest）
-    python scripts/verify.py --skip-tests    # 跳过 pytest，只跑评测回归
+    python scripts/verify.py                    # 全量四阶段
+    python scripts/verify.py --skip-tests       # 跳过 pytest
+    python scripts/verify.py --with-rubric      # 追加可选 Rubric 第 5 阶段
     python scripts/verify.py --report outputs/verify-report.md
 
-四个阶段（任一失败 ⇒ 整体 exit 1，但**其余阶段仍会跑完**，便于一次看到全部问题）：
+默认四个阶段；显式传入 --with-rubric 时追加第 5 阶段：
     1. 单元/回归测试       pytest -q
     2. 训练集归因回归       14 Case / 28 run  对比 03_公开训练参考标注
     3. 验证集 + 官方校验    8 Case / 16 run   过 08_提交格式校验.py
     4. 确定性复跑          同一输入跑两遍，输出必须逐字节相同
+    5. Rubric 双轨校验     可选：公式、封顶和正式方向不变量
 
 设计取舍：
     - 不引入任何第三方依赖（评审机器未必装 pytest，故第 1 阶段失败只提示不装包）。
@@ -336,6 +338,166 @@ def stage_determinism(workdir: Path) -> StageResult:
     )
 
 
+# ── 可选阶段 5：Rubric 双轨校验 ─────────────────────────────────────────
+def stage_rubric(workdir: Path) -> StageResult:
+    validation = workdir / "rubric-validation-submission.jsonl"
+    training = workdir / "rubric-training-submission.jsonl"
+    validation_rubric = workdir / "rubric-validation.jsonl"
+    training_rubric = workdir / "rubric-training.jsonl"
+
+    for cases, output in (
+        (VALID_CASES, validation),
+        (TRAIN_CASES, training),
+    ):
+        proc = _run_cli(
+            ["evaluate", "--cases", str(cases), "--output", str(output)]
+        )
+        if proc.returncode != 0:
+            return StageResult(
+                "Rubric 双轨校验",
+                False,
+                f"evaluate 失败：{proc.stderr.strip()[-300:]}",
+            )
+
+    verification_error = _verify_rubric_pair(
+        VALID_CASES,
+        validation,
+        validation_rubric,
+        expected_cases=8,
+        expected_runs=16,
+    )
+    if verification_error is not None:
+        return StageResult("Rubric 双轨校验", False, verification_error)
+    verification_error = _verify_validation_rubric_controls(
+        validation_rubric
+    )
+    if verification_error is not None:
+        return StageResult("Rubric 双轨校验", False, verification_error)
+    verification_error = _verify_rubric_pair(
+        TRAIN_CASES,
+        training,
+        training_rubric,
+        expected_cases=14,
+        expected_runs=28,
+    )
+    if verification_error is not None:
+        return StageResult("Rubric 双轨校验", False, verification_error)
+    return StageResult(
+        "Rubric 双轨校验",
+        True,
+        "14/28 与 8/16 公式、封顶和正式方向不变量全部通过",
+    )
+
+
+def _verify_rubric_pair(
+    cases: Path,
+    submission: Path,
+    rubric_output: Path,
+    *,
+    expected_cases: int,
+    expected_runs: int,
+) -> str | None:
+    from invoice_eval import (
+        file_sha256,
+        load_dataset,
+        load_rubric_report,
+        validate_rubric_report,
+    )
+
+    before = submission.read_bytes()
+    proc = _run_cli(
+        [
+            "rubric-report",
+            "--cases",
+            str(cases),
+            "--submission",
+            str(submission),
+            "--output",
+            str(rubric_output),
+        ]
+    )
+    if proc.returncode != 0:
+        return f"rubric-report 失败：{proc.stderr.strip()[-300:]}"
+    if submission.read_bytes() != before:
+        return "rubric-report 修改了正式 submission"
+
+    official = {
+        row["case_id"]: row for row in _read_jsonl(submission)
+    }
+    rubric = load_rubric_report(rubric_output)
+    try:
+        validate_rubric_report(
+            load_dataset(cases),
+            official,
+            rubric,
+            source_submission_sha256=file_sha256(submission),
+        )
+    except ValueError as exc:
+        return f"Rubric 契约失败：{exc}"
+    if len(official) != expected_cases or len(rubric) != expected_cases:
+        return f"Case 覆盖异常：official={len(official)}, rubric={len(rubric)}"
+    run_count = 0
+    for case_id, official_case in official.items():
+        rubric_case = rubric.get(case_id)
+        if rubric_case is None:
+            return f"{case_id}: Rubric 缺失"
+        if rubric_case.get("official_direction") != official_case.get(
+            "version_comparison", {}
+        ).get("direction"):
+            return f"{case_id}: 正式方向发生变化"
+        official_runs = official_case.get("run_assessments", [])
+        rubric_runs = rubric_case.get("run_assessments", [])
+        if len(official_runs) != 2 or len(rubric_runs) != 2:
+            return f"{case_id}: run 数异常"
+        for official_run, rubric_run in zip(official_runs, rubric_runs):
+            run_count += 1
+            if rubric_run.get("run_id") != official_run.get("run_id"):
+                return f"{case_id}: run_id 不一致"
+            if rubric_run.get("quality_score") != official_run.get(
+                "quality_score"
+            ):
+                return f"{case_id}/{rubric_run.get('run_id')}: 旧分被修改"
+            expected = (
+                min(
+                    rubric_run["quality_score"],
+                    rubric_run["impact_cap"],
+                )
+                if rubric_run.get("impact_cap") is not None
+                else rubric_run["quality_score"]
+            )
+            if rubric_run.get("rubric_score") != expected:
+                return f"{case_id}/{rubric_run.get('run_id')}: 公式不一致"
+            for key in ("agent_task_success", "business_invoice_created"):
+                if rubric_run.get(key) != official_run.get(key):
+                    return f"{case_id}/{rubric_run.get('run_id')}: {key} 变化"
+    if run_count != expected_runs:
+        return f"run 覆盖异常：{run_count}/{expected_runs}"
+    return None
+
+
+def _verify_validation_rubric_controls(path: Path) -> str | None:
+    runs = {
+        run["run_id"]: run
+        for row in _read_jsonl(path)
+        for run in row.get("run_assessments", [])
+    }
+    expected = {
+        "INV-V07-B": (20, 20),
+        "INV-V08-A": (20, 20),
+        "INV-V02-A": (None, 50),
+    }
+    for run_id, (cap, score) in expected.items():
+        run = runs.get(run_id)
+        if run is None:
+            return f"{run_id}: 封顶正反控缺失"
+        if run.get("impact_cap") != cap or run.get("rubric_score") != score:
+            return (
+                f"{run_id}: 封顶正反控失败 "
+                f"(cap={run.get('impact_cap')}, score={run.get('rubric_score')})"
+            )
+    return None
+
+
 # ── 报告渲染 ──────────────────────────────────────────────────────────────
 def _git_head() -> str:
     """报告绑定代码版本——没有 HEAD 的报告无法证明"这份结论对应哪份代码"。"""
@@ -351,7 +513,7 @@ def _git_head() -> str:
     # 那种情况下报告其实对应「HEAD + 未提交改动」，必须显式标 dirty。
     try:
         dirty = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=no"],
             cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=10,
         ).stdout.strip()
     except Exception:
@@ -368,7 +530,8 @@ def render_report(stages: list[StageResult], report_path: Path) -> None:
         f"｜ 代码版本：`{_git_head()}` ｜ 由 `python scripts/verify.py` 自动生成，请勿手改。"
     )
     lines.append("")
-    lines.append("## 1. 四阶段结论")
+    stage_label = "五阶段" if len(stages) == 5 else "四阶段"
+    lines.append(f"## 1. {stage_label}结论")
     lines.append("")
     lines.append("| # | 阶段 | 结论 | 说明 |")
     lines.append("|---|---|---|---|")
@@ -432,7 +595,7 @@ def _score(value) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="跑完确定性评测的完整回归闭环（四阶段）。"
+        description="跑完确定性评测的完整回归闭环（默认四阶段）。"
     )
     parser.add_argument(
         "--report",
@@ -441,6 +604,11 @@ def main(argv: list[str] | None = None) -> int:
         help="报告输出路径（默认 outputs/verify-report.md）",
     )
     parser.add_argument("--skip-tests", action="store_true", help="跳过 pytest 阶段")
+    parser.add_argument(
+        "--with-rubric",
+        action="store_true",
+        help="追加可选 Rubric 双轨校验第 5 阶段",
+    )
     parser.add_argument("--json", action="store_true", help="以 JSON 打印阶段结论")
     args = parser.parse_args(argv)
 
@@ -452,6 +620,8 @@ def main(argv: list[str] | None = None) -> int:
         stages.append(stage_training())
         stages.append(stage_validation(workdir))
         stages.append(stage_determinism(workdir))
+        if args.with_rubric:
+            stages.append(stage_rubric(workdir))
 
     render_report(stages, args.report)
 
