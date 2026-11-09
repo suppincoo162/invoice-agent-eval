@@ -481,7 +481,7 @@ def render_version_report(report: Mapping[str, Any]) -> str:
             "python3 -m invoice_eval --version",
             "python3 scripts/verify.py --report /tmp/verify.md",
             "python3 -m invoice_eval version-report \\",
-            "  --submission outputs/validation-v0.3.0-dev.jsonl \\",
+            "  --submission outputs/validation-v0.3.0.jsonl \\",
             "  --four-way-report outputs/four-way-report.json \\",
         ]
     )

@@ -4,7 +4,7 @@
 
 > 参赛：李经霖 / 王怡然 · 报名截止 2026-11-12 · 初赛截止 2026-11-13
 
-> 当前开发版本：`v0.3.0-dev`；正式发布目标：`v0.3.0`。
+> 当前正式版本：`v0.3.0`。
 
 ## 这个项目做什么
 
@@ -80,7 +80,7 @@ python -m invoice_eval audit \
   --cache-dir outputs/llm-cache
 
 python -m invoice_eval compare-audit \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --llm-review outputs/llm-review.jsonl \
   --output outputs/audit-comparison.jsonl \
   --case-id INV-V03
@@ -90,8 +90,8 @@ python -m invoice_eval compare-audit \
 
 ```bash
 python -m invoice_eval four-way-report \
-  --deterministic outputs/validation-v0.3.0-dev.jsonl \
-  --human outputs/manual-review/v0.2.1-first-pass.jsonl \
+  --deterministic outputs/validation-v0.3.0.jsonl \
+  --human outputs/manual-review/v0.3.0-delta-review.jsonl \
   --local-llm outputs/llm-review-local-v5-all.jsonl \
   --cloud-llm outputs/llm-review-cloud-v5-all.jsonl \
   --local-manifest outputs/llm-review-local-v5-manifest.json \
@@ -100,8 +100,8 @@ python -m invoice_eval four-way-report \
 
 python -m invoice_eval four-way-analysis \
   --report-json outputs/four-way-report.json \
-  --deterministic outputs/validation-v0.3.0-dev.jsonl \
-  --human outputs/manual-review/v0.2.1-first-pass.jsonl \
+  --deterministic outputs/validation-v0.3.0.jsonl \
+  --human outputs/manual-review/v0.3.0-delta-review.jsonl \
   --local-llm outputs/llm-review-local-v5-all.jsonl \
   --cloud-llm outputs/llm-review-cloud-v5-all.jsonl \
   --output-json outputs/four-way-llm-analysis.json \
@@ -112,7 +112,7 @@ python -m invoice_eval four-way-analysis \
 
 ```bash
 python -m invoice_eval version-report \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --four-way-report outputs/four-way-report.json \
   --output-md docs/50-deliverables/version-report.md \
   --output-json outputs/version-report-data.json
@@ -123,7 +123,7 @@ python -m invoice_eval version-report \
 ```bash
 python -m invoice_eval rubric-report \
   --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --output outputs/rubric-report.jsonl
 ```
 
@@ -138,7 +138,7 @@ Rubric 不修改正式 submission 或版本方向。主报告要展示 Rubric �
 ```bash
 python3 -m invoice_eval webui \
   --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --four-way-report outputs/four-way-report.json \
   --rubric-report outputs/rubric-report.jsonl \
   --llm-analysis outputs/four-way-llm-analysis.json \
@@ -156,6 +156,13 @@ A/B 时间线、四方对照、Rubric、事实/推断/未知和原始材料；�
 python scripts/verify.py --with-rubric
 ```
 
+生成可提交的 `v0.3.0` 发布包：
+
+```bash
+python3 scripts/build-release.py \
+  --output-dir outputs/submission-package-v0.3.0
+```
+
 云端 API 与 Ollama 使用同一接口，只需切换 `BASE_URL` 和 `MODEL`。
 API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，也不会写入
 审计结果或缓存。
@@ -164,14 +171,14 @@ API Key 只从 `INVOICE_EVAL_LLM_API_KEY` 读取，不接受命令行参数，�
 两个模型与确定性评测在版本方向、两个布尔值、根因和首错上一致，但证据范围
 不同；比较结果单独输出，正式 submission 不受影响。
 
-## 当前状态（**as of 2026-11-08** · 快照，非实时）
+## 当前状态（**as of 2026-11-09** · 快照，非实时）
 
 > 实时进度只在一处维护：[`docs/40-plan/tasks.md`](docs/40-plan/tasks.md)。以下是带日期的快照，方便"刚拿到仓库的人/Agent"一眼判断该不该往下干。
 
 | 项 | 状态 |
 |---|---|
-| **所处阶段** | **`v0.3.0-dev`：确定性评测、训练/验证回归、LLM 独立盲审和四源报告生成器已完成；进入创新分析与决赛打磨** |
-| 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) · 可选 OpenAI-compatible/Ollama 盲审 |
-| 未完成 | DeepSeek 分析附录重跑 · 反事实薄切片 · 本地 V04 最终处理 · 决赛演示材料 · `v0.3.0` 最终发布包 |
-| **下一步** | 完成反事实薄切片；用当前四源输入重跑分析附录 |
+| **所处阶段** | **`v0.3.0`：确定性评测、训练/验证回归、LLM 独立盲审、四源报告、Rubric 旁路和静态 WebUI 已完成并冻结** |
+| 已完成 | 事实层与四项判据 · JSONL 读取与索引 · 全部确定性规则 · 训练/验证回归 · 确定性归因与评分 · CLI 输出 · [方法说明](docs/50-deliverables/method.md) · [版本报告](docs/50-deliverables/version-report.md) · 可选 OpenAI-compatible/Ollama 盲审 · 静态 WebUI · 发布包 |
+| 未完成 | 反事实薄切片（可选创新候选）· 决赛现场演示材料 |
+| **下一步** | 使用统一模型做兼容冒烟，准备现场 Demo，不再改正式评测规则 |
 | 谁能动 | 任何人都可以读；**改 `main` 一律走 MR**（见 [`docs/git-workflow.md`](docs/git-workflow.md)）；`docs/00-brief/data/` 是组委会资料，**只读** |

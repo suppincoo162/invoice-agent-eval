@@ -9,6 +9,7 @@ from invoice_eval.four_way_analysis import (
     validate_analysis,
     write_analysis,
 )
+from invoice_eval.version import __version__
 
 
 class StaticAnalysisClient:
@@ -86,7 +87,7 @@ class FourWayAnalysisTests(unittest.TestCase):
             analysis["prompt_version"],
             "four-way-analysis-v1",
         )
-        self.assertEqual(analysis["evaluator_version"], "0.3.0-dev")
+        self.assertEqual(analysis["evaluator_version"], __version__)
         self.assertEqual(analysis["model"], "analysis-model")
         self.assertIn("## 事实", markdown)
         self.assertIn("## 推断", markdown)
