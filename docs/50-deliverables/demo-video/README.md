@@ -1,19 +1,38 @@
 # 演示视频材料包（v0.3.0）
 
-赛题要求提交**录屏演示**。本目录是录制所需的全套材料，**开箱即用**。
+赛题要求提交演示。本目录同时提供**两条路**：
+
+- **A. 直接交付已生成视频**（无需录屏）：`rendered/invoice-eval-demo-v0.3.0-norecording.mp4`（3:25 / 1080p / 配音 + 字幕）
+- **B. 自己录一版**（可选，更有人味）：照 `narration-script.md` 用 `start-demo.*` 起环境录制
 
 ## 一、目录内容
 
 | 文件 | 用途 |
 |---|---|
+| **`rendered/invoice-eval-demo-v0.3.0-norecording.mp4`** | **已生成的成片**（1920×1080 / 30fps / H.264+AAC / 3:25 / 约 26 MB），配音 + 烧字幕 |
+| `rendered/subtitles.srt` | 外挂字幕（Edius/剪映/上传平台可直接用） |
+| `build-video.py` | **可复现构建脚本**：TTS（edge-tts）→ 静态卡缓慢推近 → 拼接 → 烧字幕；`FFMPEG`/`FFPROBE`/`BUILD_DIR` 可配 |
 | `presentation.pptx` | 6 页幻灯片（16:9），可直接改 |
 | `presentation.pdf` | 同上，PDF 版（备份/直投） |
 | `slides/s1–s6.png` | 1920×1080 逐页图，**录屏时全屏看图切换**（避免 PPT 软件 UI 入镜） |
+| `slides/card-v08.png` · `card-four-source.png` · `card-package.png` | 补充视觉卡（V08 漂移 / 四源对照 / 提交物），已用于成片 |
 | `narration-script.md` | **逐字旁白 + 时间轴 + 每段操作动作**（主文件，先看这个） |
 | `short-video-60s.md` | **竖屏 60 秒版**（抖音/视频号/小红书），含分镜、字幕与三种发法 |
 | `start-demo.ps1` | **Windows**：一键起 WebUI 服务 + 打印分镜直达链接 |
 | `start-demo.sh` | **Linux / macOS**：同上（bash 3.2 兼容，也适用于 Git Bash） |
 | `start-demo.readme.md` | 两个脚本的用法与分镜链接表 |
+
+### 成片与录屏版的差别（诚实说明）
+
+| 项 | 已生成成片（A） | 自己录（B） |
+|---|---|---|
+| 画面 | 幻灯片 + 缓慢推近（无真人/无桌面） | 真实 WebUI 操作过程 |
+| 声音 | **TTS 配音**（zh-CN-Yunxi，-4%） | 真人讲解 |
+| 字幕 | 已烧入 + 外挂 SRT | 后期加 |
+| 时长 | 3:25 | 4:20（脚本时长） |
+| 适用 | 想省时间、直接交 | 想展示"真的能跑"、更有说服力 |
+
+> 若时间允许，**A 交底 + B 加分**最好；只交 A 也完整（视频里所有数字都能在仓库复跑）。
 
 ## 二、录制流程（约 40 分钟出片）
 
