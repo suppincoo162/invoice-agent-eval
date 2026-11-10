@@ -19,7 +19,7 @@ CASES_PATH = (
     / "04_无标注验证轨迹.jsonl"
 )
 SUBMISSION_PATH = (
-    PROJECT_ROOT / "outputs" / "validation-v0.3.0-dev.jsonl"
+    PROJECT_ROOT / "outputs" / "validation-v0.3.0.jsonl"
 )
 FOUR_WAY_PATH = PROJECT_ROOT / "outputs" / "four-way-report.json"
 RUBRIC_PATH = PROJECT_ROOT / "outputs" / "rubric-report.jsonl"

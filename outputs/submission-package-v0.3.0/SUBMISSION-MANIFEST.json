@@ -1,0 +1,13 @@
+{
+  "artifact_type": "competition_release_manifest_v1",
+  "version": "0.3.0",
+  "base_commit": "f1081648a726f3d4c3de5a8d25dff18e2701d932",
+  "working_tree_dirty": false,
+  "generated_on": "2026-11-09",
+  "dataset_version": "student-1.0",
+  "case_count": 8,
+  "run_count": 16,
+  "validation_submission_sha256": "7a09316c689e6970bfd93531b9ae5ad70df6c05b2f2539ab785708c0797feebe",
+  "source_zip": "invoice-agent-eval-v0.3.0-source.zip",
+  "source_tar_gz": "invoice-agent-eval-v0.3.0-source.tar.gz"
+}

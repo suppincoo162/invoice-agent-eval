@@ -1,7 +1,6 @@
 # 方法说明（比赛交付物）
 
-> 当前版本：`v0.3.0-dev`（2026-11-08）
-> 正式发布目标：`v0.3.0`
+> 当前版本：`v0.3.0`（2026-11-09）
 > 唯一规则真源：[`10-spec/spec.md`](../10-spec/spec.md)
 > 实现入口：[`invoice_eval/`](../../invoice_eval/)；数据包版本：`student-1.0`
 
@@ -294,7 +293,7 @@ python scripts/smoke-llm-audit.py --negative # 负控：非法响应 ⇒ 客户�
 ```bash
 python3 -m invoice_eval webui \
   --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --four-way-report outputs/four-way-report.json \
   --rubric-report outputs/rubric-report.jsonl \
   --llm-analysis outputs/four-way-llm-analysis.json \
@@ -308,11 +307,11 @@ python3 -m invoice_eval webui \
 WebUI 不重新评测、不调用 LLM、不修改正式 submission。Rubric 文件必须与输入
 submission 的 SHA256 一致；本地 V04 的契约拒绝作为来源事实保留，不补造结果。
 
-## 十八、官方主报告确定性生成
+## 十九、官方主报告确定性生成
 
 ```bash
 python3 -m invoice_eval version-report \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --four-way-report outputs/four-way-report.json \
   --output-md docs/50-deliverables/version-report.md \
   --output-json outputs/version-report-data.json
@@ -324,12 +323,12 @@ python3 -m invoice_eval version-report \
 - 按官方七节模板渲染主报告，四源、LLM、证据边界和复现材料放附录；
 - 不调用 LLM，所有数字和 Case 均来自结构化输入。
 
-## 十九、可选 Rubric 双轨评分
+## 二十、可选 Rubric 双轨评分
 
 ```bash
 python3 -m invoice_eval rubric-report \
   --cases docs/00-brief/data/04_无标注验证轨迹.jsonl \
-  --submission outputs/validation-v0.3.0-dev.jsonl \
+  --submission outputs/validation-v0.3.0.jsonl \
   --output outputs/rubric-report.jsonl
 ```
 
@@ -342,3 +341,16 @@ python3 -m invoice_eval rubric-report \
 - Rubric JSONL 绑定来源 submission SHA256、evaluator version 和生成时间；主报告消费前会校验 Case/run、旧分、布尔值、方向、公式和同 run 证据。
 - `version-report --rubric-report` 只在附录增加双轨对照；不传时主报告行为不变。
 - `scripts/verify.py` 默认仍为四阶段；`--with-rubric` 才启用第 5 阶段。
+
+## 二十一、正式发布包
+
+正式包从 clean commit 生成，包含源码 ZIP/TAR.GZ、验证集 submission、回归报告、
+发布说明、清单和 SHA256 校验：
+
+```bash
+python3 scripts/build-release.py \
+  --output-dir outputs/submission-package-v0.3.0
+```
+
+脚本拒绝 `-dev` 版本号、非空输出目录和带已跟踪未提交修改的工作树；只有显式
+开发冒烟才允许 `--allow-dirty`。正式包不能依赖本地 `.env`、模型缓存或网络。
