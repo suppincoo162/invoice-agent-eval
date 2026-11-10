@@ -1,0 +1,52 @@
+# 演示视频材料包（v0.3.0）
+
+赛题要求提交**录屏演示**。本目录是录制所需的全套材料，**开箱即用**。
+
+## 一、目录内容
+
+| 文件 | 用途 |
+|---|---|
+| `presentation.pptx` | 6 页幻灯片（16:9），可直接改 |
+| `presentation.pdf` | 同上，PDF 版（备份/直投） |
+| `slides/s1–s6.png` | 1920×1080 逐页图，**录屏时全屏看图切换**（避免 PPT 软件 UI 入镜） |
+| `narration-script.md` | **逐字旁白 + 时间轴 + 每段操作动作**（主文件，先看这个） |
+| `start-demo.ps1` | 一键起 WebUI 服务 + 打印分镜直达链接 |
+| `start-demo.readme.md` | 脚本用法与分镜链接表 |
+
+## 二、录制流程（约 40 分钟出片）
+
+1. **准备环境**（5 分钟）：1080p / 100% 缩放 / 关通知 / 干净桌面
+2. **起演示环境**：
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File docs\50-deliverables\demo-video\start-demo.ps1
+   ```
+3. **照 `narration-script.md` 逐段录**（建议分段录，每段一个文件，后期拼接）
+4. **剪辑**：按时间轴对齐字幕；S8 的终端命令可现场跑（约 15–20 秒）或贴预跑画面
+
+## 三、数字溯源（每个数字都能当场复现）
+
+> 原则：视频里出现的数字，评审若追问必须能指向命令或文件。
+
+| 视频说法 | 复现方式 |
+|---|---|
+| `128 tests + 31 subtests` | `python -m pytest -q` |
+| `训练 28 run / 验证 16 run` | `python scripts/verify.py --with-rubric` |
+| `INV-V07-B 首错 B-05` | `outputs/validation-v0.3.0-dev.jsonl` → INV-V07 → root_causes |
+| `B-05→B-08→B-09→B-10` | 同上 `evidence_event_ids` |
+| `Rubric 70 → 20` / `WRONG_INVOICE_CREATED` | `outputs/rubric-report.jsonl` → INV-V07 → run_assessments |
+| `V08 预览 3710` | `docs/00-brief/data/04_无标注验证轨迹.jsonl` → INV-V08-A-07 |
+| `V08 提交 3711` | 同上 → INV-V08-A-08 → `tool_calls[0].arguments.amounts.inclusive_amount` |
+| `本地 V04 契约拒绝` | `outputs/four-way-report.json` → `sources.local_llm.statuses` |
+| `8 Case / 16 Run` | WebUI 顶栏 / `outputs/version-report-data.json` |
+
+## 四、注意事项
+
+1. **合规**：手册要求「演示只应使用本资料包数据」——本演示全部使用 `docs/00-brief/data/`，合规。录制时仍请用干净桌面。
+2. **不要现场跑 LLM 审计**：四源对照用预生成产物（`llm-review-*.jsonl`）展示即可；现场跑会受网络/模型稳定性影响，还可能暴露配置。
+3. **版本锚点**：画面保留 WebUI 顶栏的版本与 commit；口播只说 `v0.3.0`，具体 commit 由包内 `SUBMISSION-MANIFEST.json` 承担。
+4. **脚本编码坑（已修）**：`start-demo.ps1` 保持**纯 ASCII**——Windows PowerShell 5.1 按 ANSI 读 `.ps1`，脚本内的中文会破坏解析（2026-11-10 实测）。
+
+## 五、时长
+
+- 完整版 **4:20**（S1–S9）
+- 压到 **4:00**：删 S8 后半句；**不建议**删 S4/S5（证据链是核心卖点）
