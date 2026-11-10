@@ -1,11 +1,11 @@
 # 演示视频 · 一键演示环境
 
 启动 WebUI 静态服务，并打印每个分镜的**直达链接**（录屏时直接粘贴到地址栏即可）。
+**Windows 用 `.ps1`，Linux / macOS（以及 Git Bash）用 `.sh`，两者行为一致。**
 
-## 用法
+## 用法（Windows）
 
 ```powershell
-# 在仓库任意位置：
 powershell -ExecutionPolicy Bypass -File docs\50-deliverables\demo-video\start-demo.ps1
 
 # 不打开浏览器（只起服务 + 打印链接）：
@@ -15,11 +15,33 @@ powershell -ExecutionPolicy Bypass -File docs\50-deliverables\demo-video\start-d
 ... start-demo.ps1 -Port 8080
 ```
 
-停止服务：
+## 用法（Linux / macOS / Git Bash）
+
+```bash
+bash docs/50-deliverables/demo-video/start-demo.sh
+
+# 不打开浏览器：
+bash .../start-demo.sh --no-browser
+
+# 换端口：
+PORT=8080 bash .../start-demo.sh
+```
+
+## 停止服务
 
 ```powershell
+# Windows（PowerShell）
 Get-NetTCPConnection -LocalPort 8000 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
 ```
+
+```bash
+# macOS / Linux
+lsof -ti:8000 | xargs kill
+# 或者用脚本写下的 pidfile：
+kill "$(cat "${TMPDIR:-/tmp}/invoice-eval-demo-8000.pid")"
+```
+
+> ⚠️ Git Bash 下 pidfile 里是 **MSYS PID**，可能对不上 Windows 进程号——那种情况按端口停。
 
 ## 分镜直达链接（脚本会打印同样的清单）
 
