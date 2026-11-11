@@ -17,7 +17,7 @@
 | `presentation.pptx` | 6 页幻灯片（16:9），可直接改 |
 | `presentation.pdf` | 同上，PDF 版（备份/直投） |
 | `slides/s1–s6.png` | 1920×1080 逐页图，**录屏时全屏看图切换**（避免 PPT 软件 UI 入镜） |
-| `slides/architecture.png` | **架构导图**（2800×1760），已用于 PPT 第 3 页 |
+| 架构导图（规范资产） | `docs/assets/architecture/`：`invoice-agent-eval-architecture.png`（2800×1760）＋ HTML 源 ＋ 深色版；**PPT 第 3 页已内嵌**，不在此目录重复存图 |
 | `slides/card-v08.png` · `card-four-source.png` · `card-package.png` | 补充视觉卡（V08 漂移 / 四源对照 / 提交物），已用于 TTS 成片 |
 | **`narration-script-3m30-ppt.md`** | **主用口播稿（3:30 · 6 页 PPT）**：王怡然 11-11 版，已修正第 2 页一处事实错误 |
 | `narration-script-4m20-webui.md` | 备用：4:20 混合版（PPT + WebUI 操作），含 9 段分镜 |
