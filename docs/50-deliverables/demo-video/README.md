@@ -3,22 +3,26 @@
 赛题要求提交演示。本目录同时提供**两条路**：
 
 - **A. 直接交付已生成视频**（无需录屏）：`rendered/invoice-eval-demo-v0.3.0-norecording.mp4`（3:25 / 1080p / 配音 + 字幕）
-- **B. 自己录一版**（可选，更有人味）：照 `narration-script.md` 用 `start-demo.*` 起环境录制
+- **B. 自己录一版**（已选定 · **3:30 / 6 页 PPT 版**）：**看 `RECORDING-RUNBOOK.md`**，口播看 `narration-script-3m30-ppt.md`，跑 `prep-recording.ps1` 一键布置环境
 
 ## 一、目录内容
 
 | 文件 | 用途 |
 |---|---|
-| **`rendered/invoice-eval-demo-v0.3.0-norecording.mp4`** | **已生成的成片**（1920×1080 / 30fps / H.264+AAC / 3:25 / 约 26 MB），配音 + 烧字幕 |
+| **`RECORDING-RUNBOOK.md`** | **手动录屏作战手册（3:30 · 6 页 PPT 版）**：15 分钟准备 → 一条命令布置 → 6 段分镜操作卡（指哪里/说什么）→ 数字提示卡 → 可选 WebUI 补段 |
+| **`prep-recording.ps1`** | **录屏环境一键布置**：打开 PPT/PDF/稿子 + 打印 6 段分镜卡（`-DryRun` 空跑；`-WithWebUI` 额外起可选补段服务） |
+| **`rendered/invoice-eval-demo-v0.3.0-norecording.mp4`** | **已生成的成片**（1920×1080 / 30fps / H.264+AAC / 3:25 / 约 26 MB），配音 + 烧字幕——路径 A 的兜底 |
 | `rendered/subtitles.srt` | 外挂字幕（Edius/剪映/上传平台可直接用） |
 | `build-video.py` | **可复现构建脚本**：TTS（edge-tts）→ 静态卡缓慢推近 → 拼接 → 烧字幕；`FFMPEG`/`FFPROBE`/`BUILD_DIR` 可配 |
 | `presentation.pptx` | 6 页幻灯片（16:9），可直接改 |
 | `presentation.pdf` | 同上，PDF 版（备份/直投） |
 | `slides/s1–s6.png` | 1920×1080 逐页图，**录屏时全屏看图切换**（避免 PPT 软件 UI 入镜） |
-| `slides/card-v08.png` · `card-four-source.png` · `card-package.png` | 补充视觉卡（V08 漂移 / 四源对照 / 提交物），已用于成片 |
-| `narration-script.md` | **逐字旁白 + 时间轴 + 每段操作动作**（主文件，先看这个） |
+| 架构导图（规范资产） | `docs/assets/architecture/`：`invoice-agent-eval-architecture.png`（2800×1760）＋ HTML 源 ＋ 深色版；**PPT 第 3 页已内嵌**，不在此目录重复存图 |
+| `slides/card-v08.png` · `card-four-source.png` · `card-package.png` | 补充视觉卡（V08 漂移 / 四源对照 / 提交物），已用于 TTS 成片 |
+| **`narration-script-3m30-ppt.md`** | **主用口播稿（3:30 · 6 页 PPT）**：王怡然 11-11 版，已修正第 2 页一处事实错误 |
+| `narration-script-4m20-webui.md` | 备用：4:20 混合版（PPT + WebUI 操作），含 9 段分镜 |
 | `short-video-60s.md` | **竖屏 60 秒版**（抖音/视频号/小红书），含分镜、字幕与三种发法 |
-| `start-demo.ps1` | **Windows**：一键起 WebUI 服务 + 打印分镜直达链接 |
+| `start-demo.ps1` | **Windows**：一键起 WebUI 服务 + 打印分镜直达链接（录前布置用，比 prep 轻） |
 | `start-demo.sh` | **Linux / macOS**：同上（bash 3.2 兼容，也适用于 Git Bash） |
 | `start-demo.readme.md` | 两个脚本的用法与分镜链接表 |
 
