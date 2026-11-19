@@ -1,0 +1,55 @@
+name: pages
+
+# 只发布离线 WebUI（outputs/webui）作为面试/评审演示站。
+# 不发布仓库其它内容（docs、data、源码），也不使用 Jekyll。
+#
+# 首次使用前需在仓库 Settings → Pages → Source 选择 "GitHub Actions"。
+# 部署后地址：https://<owner>.github.io/<repo>/
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "outputs/webui/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # WebUI 是生成物；入口缺失时直接失败，避免发布一个空站。
+      - name: Verify WebUI entry
+        run: |
+          test -f outputs/webui/index.html
+          test -f outputs/webui/data.js
+          test -f outputs/webui/app.js
+          test -f outputs/webui/styles.css
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: outputs/webui
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
